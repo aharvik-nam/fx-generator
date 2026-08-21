@@ -32,3 +32,8 @@ export function hexToRgb(hex: string): Rgb {
 export function relativeLuminance({ r, g, b }: Rgb): number {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255
 }
+
+export function rgbToHex({ r, g, b }: Rgb): string {
+  const toHex = (channel: number) => clamp8(Math.round(channel)).toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
