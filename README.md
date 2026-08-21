@@ -4,11 +4,11 @@ Et lokalt, nettleserbasert bildeeffekt-laboratorium og presentasjonsverktøy. La
 bygg en ikke-destruktiv effektkjede, og presenter transformasjonen som en interaktiv showcase —
 alt kjøres i din egen nettleser. Ingen bilder eller metadata forlater maskinen din.
 
-> **Status:** tidlig utvikling (milepæl M4 — Showcase del 1). Opplasting, en ikke-destruktiv
-> effektkjede med alle 9 Prioritet-1-effekter, metadata-lesing/-visning, full oppløsning-eksport,
-> en redigerbar AI Image Recipe, og lokal prosjektlagring (IndexedDB) med ZIP-eksport fungerer.
-> Showcase-modus er nå implementert med en editor for navngitte states og en **Vertical
-> Story**-visningsmodus; Before/After Explorer kommer i M5. Se [Veikart](#veikart) for planen.
+> **Status:** MVP-en er komplett (M0–M5). Opplasting, en ikke-destruktiv effektkjede med alle 9
+> Prioritet-1-effekter, metadata-lesing/-visning, full oppløsning-eksport, en redigerbar AI Image
+> Recipe, lokal prosjektlagring (IndexedDB) med ZIP-eksport, og Showcase-modus med **Vertical
+> Story**- og **Before/After Explorer**-visningsmoduser fungerer, med en tilgjengelighets- og
+> mobiltilpasningsgjennomgang. Se [Veikart](#veikart) for planen videre (M6 og post-MVP).
 >
 > **Live:** [fx-generator.vercel.app](https://fx-generator.vercel.app)
 
@@ -47,13 +47,20 @@ Implementert så langt:
   uavhengige states (hver med egen effektkjede, kamera og miniatyrbilde). Showcase-editor med
   dra-og-slipp-omrokkering, dupliser/slett, start/slutt-markering, intro/outro-tekst og
   visningsinnstillinger (metadata/recipe/parametere). Lagres lokalt (IndexedDB), ett showcase per
-  prosjekt. **Vertical Story**-visningsmodus: scroll-drevet presentasjon med
-  fremdriftsindikator og hopp-til-state-navigasjon.
+  prosjekt. To visningsmoduser: **Vertical Story** (scroll-drevet presentasjon med
+  fremdriftsindikator og hopp-til-state-navigasjon) og **Before/After Explorer** (delt
+  før/etter-sammenligning av showcasets start- og slutt-state, med en dra-i-bildet-glidebryter
+  og en tilgjengelig `<Slider>`-kontroll — begge styrer samme posisjon — pluss valgfri
+  loddrett/vannrett delelinje).
+- Tilgjengelighet: hopp-til-innhold-lenke, `<main>`-landemerker per visning, tastaturstyrt
+  dra-og-slipp (effektstakk og showcase-stateliste). Mobiltilpasning: effektbibliotek og
+  effektstakk/metadata/recipe åpnes som sideskuffer (`Sheet`) under `lg`-brytepunktet i stedet for
+  faste sidepaneler, og topplinjen beholder visningsbryteren (Editor/Showcase/Forhåndsvis)
+  synlig mens resten av knapperaden kan scrolles horisontalt ved behov.
 
 Planlagt (se [Veikart](#veikart)):
 
 - Presets lokalt.
-- **Before/After Explorer**-visningsmodus og `interpolateShowcaseState` for glidende overganger.
 
 ## Teknologi
 
@@ -115,9 +122,11 @@ src/
   export/        # imageExport (orkestrering + nedlasting), jpegMetadataInject (piexifjs),
                   # recipeGenerator (Markdown + provider-prompts), zipExport (jszip),
                   # ExportDialog-UI
-  showcase/       # thumbnail.ts (state-miniatyrbilder), scrollModes/verticalStory/ (M4);
-                  # interpolateShowcaseState + before-after (M5)
-  components/     # UI: layout, editor (inkl. params/), metadata, recipe, project, showcase, ui (shadcn)
+  showcase/       # thumbnail.ts, formatMetadataExcerpt.ts, interpolateShowcaseState.ts (ren
+                  # funksjon for fremtidig scroll-interpolering), scrollModes/verticalStory/,
+                  # scrollModes/beforeAfter/
+  components/     # UI: layout (inkl. MobilePanelBar), editor (inkl. params/), metadata, recipe,
+                  # project, showcase, ui (shadcn, inkl. sheet.tsx for mobil sidepanel-tilgang)
   hooks/          # Delte React-hooks (tastatursnarveier)
   lib/            # Small utilities (cn-helper, filvalidering, blob/data-URL-konvertering)
 ```
@@ -177,8 +186,14 @@ nettleserverifisering); resten er planlagt.
   parametere); automatisk miniatyrbilde-generering per state; **Vertical Story**-visningsmodus
   (`IntersectionObserver`-drevet aktiv-state-sporing, fremdriftsindikator, hopp-til-state-
   navigasjon via sidepanel med prikker).
-- ⬜ **M5 — Showcase del 2 + tilgjengelighet:** Before/After Explorer,
-  `interpolateShowcaseState`, a11y- og mobiltilpasning. Fullfører MVP-en.
+- ✅ **M5 — Showcase del 2 + tilgjengelighet:** **Before/After Explorer**-visningsmodus (delt
+  sammenligning av start-/slutt-state, dra-i-bildet + tilgjengelig `Slider`-kontroll, loddrett/
+  vannrett delelinje); `interpolateShowcaseState` som en ren, enhetstestet funksjon (lerpe
+  numeriske og fargeparametere, snappe boolean/select/seed ved 50 %, matche effekter på stabil
+  id med inn/ut-toning for effekter som kun finnes i én av states); tilgjengelighetsgjennomgang
+  (hopp-til-innhold-lenke, `<main>`-landemerker per visning); mobiltilpasning
+  (`Sheet`-sidepaneler for effektbibliotek/-stakk under `lg`, en alltid synlig visningsbryter i
+  topplinjen). Fullfører MVP-en.
 - ⬜ **M6 — Deploy-herding:** ferdigstille README, bekrefte live Vercel-deploy.
 
 Post-MVP (ikke bygget uten egen godkjenning): pinned-canvas/scrollytelling, resten av
