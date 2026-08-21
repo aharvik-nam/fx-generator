@@ -4,10 +4,11 @@ Et lokalt, nettleserbasert bildeeffekt-laboratorium og presentasjonsverktøy. La
 bygg en ikke-destruktiv effektkjede, og presenter transformasjonen som en interaktiv showcase —
 alt kjøres i din egen nettleser. Ingen bilder eller metadata forlater maskinen din.
 
-> **Status:** tidlig utvikling (milepæl M3 — AI Image Recipe + prosjektlagring). Opplasting, en
-> ikke-destruktiv effektkjede med alle 9 Prioritet-1-effekter, metadata-lesing/-visning, full
-> oppløsning-eksport, en redigerbar AI Image Recipe, og lokal prosjektlagring (IndexedDB) med
-> ZIP-eksport fungerer. Showcase-modus er ikke implementert ennå. Se [Veikart](#veikart) for planen.
+> **Status:** tidlig utvikling (milepæl M4 — Showcase del 1). Opplasting, en ikke-destruktiv
+> effektkjede med alle 9 Prioritet-1-effekter, metadata-lesing/-visning, full oppløsning-eksport,
+> en redigerbar AI Image Recipe, og lokal prosjektlagring (IndexedDB) med ZIP-eksport fungerer.
+> Showcase-modus er nå implementert med en editor for navngitte states og en **Vertical
+> Story**-visningsmodus; Before/After Explorer kommer i M5. Se [Veikart](#veikart) for planen.
 >
 > **Live:** [fx-generator.vercel.app](https://fx-generator.vercel.app)
 
@@ -42,12 +43,17 @@ Implementert så langt:
 - Lagre og åpne prosjekter lokalt (IndexedDB) — inkludert originalbildet, hele effektkjeden og
   recipe-feltene.
 - Eksporter en komplett ZIP-pakke (bilde + `recipe.md` + `project.json`).
+- **Showcase-modus:** bygg en presentasjon av et bildes transformasjon som en sekvens av navngitte,
+  uavhengige states (hver med egen effektkjede, kamera og miniatyrbilde). Showcase-editor med
+  dra-og-slipp-omrokkering, dupliser/slett, start/slutt-markering, intro/outro-tekst og
+  visningsinnstillinger (metadata/recipe/parametere). Lagres lokalt (IndexedDB), ett showcase per
+  prosjekt. **Vertical Story**-visningsmodus: scroll-drevet presentasjon med
+  fremdriftsindikator og hopp-til-state-navigasjon.
 
 Planlagt (se [Veikart](#veikart)):
 
 - Presets lokalt.
-- Bygg interaktive "Showcase"-presentasjoner av et bildes transformasjon gjennom flere navngitte
-  states, med **Vertical Story**- og **Before/After**-visningsmoduser (flere kommer senere).
+- **Before/After Explorer**-visningsmodus og `interpolateShowcaseState` for glidende overganger.
 
 ## Teknologi
 
@@ -103,16 +109,17 @@ src/
     random/        # Seedet PRNG (mulberry32) for generative effekter
     color/         # Blend mode-mapping, blend mode-labels
     image/          # Bildeavkoding + nedskalert forhåndsvisning
-  state/         # Zustand-stores (view, project — inkl. historikk, lagre/åpne prosjekt)
-  persistence/   # db.ts (idb-schema), projectRepository.ts (lagre/liste/hent/slett)
+  state/         # Zustand-stores (view, project — inkl. historikk, lagre/åpne prosjekt — og showcase)
+  persistence/   # db.ts (idb-schema), projectRepository.ts, showcaseRepository.ts (lagre/hent/slett)
   metadata/      # exifr-basert EXIF/XMP/IPTC/GPS-lesing, strip/keep-sensitiv-policy
   export/        # imageExport (orkestrering + nedlasting), jpegMetadataInject (piexifjs),
                   # recipeGenerator (Markdown + provider-prompts), zipExport (jszip),
                   # ExportDialog-UI
-  showcase/       # Interpolering og scroll-moduser (M4/M5+)
-  components/     # UI: layout, editor (inkl. params/), metadata, recipe, project, ui (shadcn)
+  showcase/       # thumbnail.ts (state-miniatyrbilder), scrollModes/verticalStory/ (M4);
+                  # interpolateShowcaseState + before-after (M5)
+  components/     # UI: layout, editor (inkl. params/), metadata, recipe, project, showcase, ui (shadcn)
   hooks/          # Delte React-hooks (tastatursnarveier)
-  lib/            # Small utilities (cn-helper, filvalidering)
+  lib/            # Small utilities (cn-helper, filvalidering, blob/data-URL-konvertering)
 ```
 
 ## Arkitektur
@@ -163,7 +170,13 @@ nettleserverifisering); resten er planlagt.
   Flux/SDXL/Midjourney/Gemini; lokal prosjektlagring i IndexedDB (originalbilde + effektkjede +
   recipe) med en Prosjekter-dialog for å åpne/slette; ZIP-eksport av bilde + `recipe.md` +
   `project.json`.
-- ⬜ **M4 — Showcase del 1:** showcase-datamodell, showcase-editor, Vertical Story.
+- ✅ **M4 — Showcase del 1:** showcase-datamodell (`ShowcaseProject`/`ShowcaseState`), lokal
+  lagring i IndexedDB (ett showcase per prosjekt); showcase-editor med opprett-fra-gjeldende-
+  redigering, dra-og-slipp-omrokkering, dupliser/slett, navngiving/beskrivelse/notater,
+  start/slutt-state-markering, intro/outro-tekst og visningsinnstillinger (metadata/recipe/
+  parametere); automatisk miniatyrbilde-generering per state; **Vertical Story**-visningsmodus
+  (`IntersectionObserver`-drevet aktiv-state-sporing, fremdriftsindikator, hopp-til-state-
+  navigasjon via sidepanel med prikker).
 - ⬜ **M5 — Showcase del 2 + tilgjengelighet:** Before/After Explorer,
   `interpolateShowcaseState`, a11y- og mobiltilpasning. Fullfører MVP-en.
 - ⬜ **M6 — Deploy-herding:** ferdigstille README, bekrefte live Vercel-deploy.
