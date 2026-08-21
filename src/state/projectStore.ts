@@ -15,6 +15,7 @@ import { createPreviewBitmap, decodeImageFile } from '@/engine/image/imageLoadin
 import { readImageMetadata } from '@/metadata/readMetadata'
 import { validateImageFile } from '@/lib/fileValidation'
 import { saveProject as persistProject, loadProjectOriginal } from '@/persistence/projectRepository'
+import { useViewStore } from './viewStore'
 
 const MAX_HISTORY_LENGTH = 50
 
@@ -153,6 +154,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         showBeforeAfter: false,
         isLoading: false,
       })
+      // A newly loaded image invalidates any showcase-preview built from the previous one.
+      useViewStore.getState().setView('editor')
     } catch (error) {
       set({
         isLoading: false,
@@ -188,6 +191,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         showBeforeAfter: false,
         isLoading: false,
       })
+      useViewStore.getState().setView('editor')
     } catch (error) {
       set({
         isLoading: false,
