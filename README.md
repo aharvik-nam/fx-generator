@@ -1,0 +1,142 @@
+# fx-generator
+
+Et lokalt, nettleserbasert bildeeffekt-laboratorium og presentasjonsverktøy. Last opp et bilde,
+bygg en ikke-destruktiv effektkjede, og presenter transformasjonen som en interaktiv showcase —
+alt kjøres i din egen nettleser. Ingen bilder eller metadata forlater maskinen din.
+
+> **Status:** tidlig utvikling (milepæl M0 — prosjektskjelett). Effektmotor, opplasting,
+> eksport og showcase-modus er ikke implementert ennå. Se [Veikart](#veikart) for planen.
+
+## Innhold
+
+- [Funksjonalitet (planlagt)](#funksjonalitet-planlagt)
+- [Teknologi](#teknologi)
+- [Kom i gang](#kom-i-gang)
+- [Prosjektstruktur](#prosjektstruktur)
+- [Arkitektur](#arkitektur)
+- [Personvern](#personvern)
+- [Veikart](#veikart)
+- [Deploy til Vercel](#deploy-til-vercel)
+
+## Funksjonalitet (planlagt)
+
+- Last opp JPG, PNG og WebP, med live forhåndsvisning på canvas.
+- Bygg en ubegrenset, ikke-destruktiv effektkjede (rekkefølge, synlighet, opacity, blend mode,
+  parametere) uten å røre originalfilen.
+- Angre/gjøre om, lagre prosjekter og presets lokalt (IndexedDB).
+- Eksporter til PNG/JPG/WebP med eksplisitt kontroll over EXIF/XMP/IPTC/GPS-metadata.
+- Generer en redigerbar, nedlastbar "AI Image Recipe" i Markdown, med prompt-formatering for
+  Flux, SDXL, Midjourney og Gemini.
+- Bygg interaktive "Showcase"-presentasjoner av et bildes transformasjon gjennom flere navngitte
+  states, med **Vertical Story**- og **Before/After**-visningsmoduser (flere kommer senere).
+
+Full produktspesifikasjon og milepælplan ligger i prosjektets planleggingsdokumentasjon; se
+[Veikart](#veikart) under for hva som faktisk er bygget så langt.
+
+## Teknologi
+
+| Område          | Valg                                                                                          |
+| --------------- | --------------------------------------------------------------------------------------------- |
+| Rammeverk       | Vite + React 19 + TypeScript (strict)                                                         |
+| UI              | Tailwind CSS v4 + shadcn/ui (Radix-baserte primitiver)                                        |
+| State           | Zustand                                                                                       |
+| Lokal lagring   | IndexedDB via `idb`                                                                           |
+| Bildebehandling | Canvas 2D (MVP), med `EffectDefinition.rendererKind` klargjort for WebGL/WebGPU/Worker senere |
+| Metadata        | `exifr` (EXIF/XMP/IPTC-lesing), `piexifjs` (EXIF-reinjeksjon ved JPEG-eksport)                |
+| Zip-eksport     | `jszip`                                                                                       |
+| Drag-and-drop   | `@dnd-kit`                                                                                    |
+| Test            | Vitest + React Testing Library                                                                |
+| Lint/format     | oxlint (inkl. `jsx-a11y`, `typescript`, `react`-regelsett) + Prettier                         |
+
+Appen er en ren statisk frontend uten backend — det er ikke nødvendig med noen server- eller
+API-komponent, og ingen miljøvariabler/hemmeligheter kreves.
+
+## Kom i gang
+
+Krever Node.js 20+ og npm.
+
+```bash
+npm install
+npm run dev
+```
+
+Åpne `http://localhost:5173`.
+
+### Andre kommandoer
+
+```bash
+npm run typecheck   # TypeScript-sjekk (tsc -b)
+npm run lint         # oxlint
+npm run test         # Vitest (engangskjøring)
+npm run test:watch   # Vitest i watch-modus
+npm run format        # Prettier, skriver endringer
+npm run build         # Produksjonsbygg (typecheck + vite build)
+npm run preview       # Forhåndsvis produksjonsbygget lokalt
+```
+
+## Prosjektstruktur
+
+```
+src/
+  types/        # Delt TypeScript-type-overflate (ImageProject, EffectNode, Showcase, ...)
+  engine/        # Effektmotor: registry, rendering-pipeline, seeded random, paletter (M1+)
+  state/         # Zustand-stores (view, project, editor, showcase)
+  persistence/   # IndexedDB-repositories (M3+)
+  metadata/      # EXIF/XMP/IPTC-lesing og strip/keep-policy (M2+)
+  export/        # Bilde-, ZIP- og Recipe-eksport (M2/M3+)
+  showcase/       # Interpolering og scroll-moduser (M4/M5+)
+  components/     # UI: layout, editor, showcase, metadata, recipe, export, ui (shadcn)
+  hooks/          # Delte React-hooks
+  lib/            # Small utilities (cn-helper, filvalidering)
+```
+
+## Arkitektur
+
+- **Ikke-destruktiv effektkjede:** hvert bilde har en original som aldri endres, pluss en
+  ordnet liste av `EffectNode`-er (type, parametere, opacity, blend mode, valgfri `seed` for
+  reproduserbare generative effekter). Rendering skjer i et eget pipeline-lag, separat fra
+  UI-kontrollene og fra selve effekt-definisjonene.
+- **Preview vs. eksport:** redigering skjer mot et nedskalert forhåndsvisningsbilde for god
+  ytelse; eksport kjører hele effektkjeden på nytt i full oppløsning mot originalen, i en Web
+  Worker med `OffscreenCanvas` slik at UI-et ikke fryser.
+- **Showcase-states:** en showcase er en navngitt sekvens av komplette, uavhengige snapshots av
+  en effektkjede + kamera (zoom/pan). Det finnes ingen skjult delt state mellom states — å
+  duplisere og endre én state kan aldri påvirke en annen.
+- **Renderer-agnostisk:** `EffectDefinition.rendererKind` (`canvas2d` / `webgl` / `webgpu` /
+  `worker`) lar nye effekttyper legges til uten å endre rendering-pipelinens kontrakt.
+
+## Personvern
+
+All ordinær bildebehandling skjer lokalt i nettleseren din. Originalfilen lastes aldri opp noe
+sted og endres aldri. Metadata (EXIF/XMP/IPTC/GPS) leses kun lokalt for visning i
+metadata-panelet; ved eksport fjernes sensitiv metadata (GPS, serienummer, presist tidsstempel)
+som standard, og du må eksplisitt velge å beholde metadata. Ingenting sendes til noen ekstern
+server i denne appen.
+
+## Veikart
+
+Milepæler markert ✅ er implementert og verifisert (typecheck/lint/test/build + manuell
+nettleserverifisering); resten er planlagt.
+
+- ✅ **M0 — Prosjektskjelett:** Vite/React/TS/Tailwind/shadcn-oppsett, full TypeScript-type-
+  overflate, tomt layout-skall (TopBar/venstre-/høyre-panel/canvas-område).
+- ⬜ **M1 — Kjerneeditor:** opplasting, ikke-destruktiv effektmotor, effektbibliotek/-stakk-UI,
+  zoom/pan/før-etter, angre/gjøre om. Effekter: Exposure, Contrast, Duotone, Film grain.
+- ⬜ **M2 — Resten av Prioritet-1-effektene + metadata + eksport:** Vignette, Posterize, RGB
+  channel shift, Pixelation, Ordered dithering; metadata-panel; PNG/JPG/WebP-eksport.
+- ⬜ **M3 — AI Image Recipe + prosjektlagring:** Markdown-oppskrift, ZIP-eksport,
+  IndexedDB-prosjekter.
+- ⬜ **M4 — Showcase del 1:** showcase-datamodell, showcase-editor, Vertical Story.
+- ⬜ **M5 — Showcase del 2 + tilgjengelighet:** Before/After Explorer,
+  `interpolateShowcaseState`, a11y- og mobiltilpasning. Fullfører MVP-en.
+- ⬜ **M6 — Deploy-herding:** ferdigstille README, bekrefte live Vercel-deploy.
+
+Post-MVP (ikke bygget uten egen godkjenning): pinned-canvas/scrollytelling, resten av
+Prioritet-2-effektkatalogen, presets-UI, masker-UI, horizontal-gallery/parallax/free-explore,
+deling av showcase via URL, video/GIF-eksport, sandkassekjørt egendefinert shader/JS.
+
+## Deploy til Vercel
+
+Prosjektet er en ren statisk Vite-app uten backend, og krever ingen `vercel.json` eller
+miljøvariabler for å kjøre. Push til `main` på GitHub-repositoryet trigger automatisk deploy når
+Vercel-prosjektet er koblet til repoet.
