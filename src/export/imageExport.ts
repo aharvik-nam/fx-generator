@@ -18,7 +18,7 @@ const EXTENSION_FOR_FORMAT: Record<ExportSettings['format'], string> = {
   webp: 'webp',
 }
 
-function stripExtension(fileName: string): string {
+export function stripExtension(fileName: string): string {
   const lastDot = fileName.lastIndexOf('.')
   return lastDot > 0 ? fileName.slice(0, lastDot) : fileName
 }

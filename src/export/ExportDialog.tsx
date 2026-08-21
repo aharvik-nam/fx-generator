@@ -1,5 +1,5 @@
-import { useId, useState } from 'react'
-import { AlertTriangle, Download, Loader2 } from 'lucide-react'
+import { useId, useRef, useState } from 'react'
+import { AlertTriangle, Download, FileArchive, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -21,7 +21,10 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { useProjectStore } from '@/state/projectStore'
+import { RenderPipeline } from '@/engine/pipeline/renderPipeline'
+import { extractDominantPaletteFromCanvas } from '@/engine/color/palette'
 import { downloadBlob, exportImage } from './imageExport'
+import { buildProjectZip } from './zipExport'
 import type { ExportImageFormat, MetadataPolicy } from '@/types'
 
 const FORMAT_OPTIONS: { value: ExportImageFormat; label: string }[] = [
@@ -39,6 +42,7 @@ const METADATA_POLICY_OPTIONS: { value: MetadataPolicy; label: string }[] = [
 export function ExportDialog() {
   const [open, setOpen] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [isZipExporting, setIsZipExporting] = useState(false)
   const [exportError, setExportError] = useState<string | null>(null)
   const [useCustomResolution, setUseCustomResolution] = useState(false)
   const [maxDimension, setMaxDimension] = useState(2048)
@@ -46,7 +50,9 @@ export function ExportDialog() {
   const project = useProjectStore((state) => state.project)
   const originalFile = useProjectStore((state) => state.assets.originalFile)
   const originalBitmap = useProjectStore((state) => state.assets.originalBitmap)
+  const previewBitmap = useProjectStore((state) => state.assets.previewBitmap)
   const updateExportSettings = useProjectStore((state) => state.updateExportSettings)
+  const pipelineRef = useRef(new RenderPipeline())
 
   const maxDimensionInputId = useId()
 
@@ -55,6 +61,10 @@ export function ExportDialog() {
 
   const canKeepMetadata = exportSettings.format === 'jpeg'
   const showMetadataCaveat = !canKeepMetadata && exportSettings.metadataPolicy !== 'strip-all'
+  const resolvedSettings = {
+    ...exportSettings,
+    resolution: useCustomResolution ? ({ maxDimension } as const) : ('original' as const),
+  }
 
   async function handleExport() {
     if (!originalFile || !originalBitmap || !project) return
@@ -65,10 +75,7 @@ export function ExportDialog() {
         sourceBitmap: originalBitmap,
         originalFile,
         effects: project.effects,
-        settings: {
-          ...exportSettings,
-          resolution: useCustomResolution ? { maxDimension } : 'original',
-        },
+        settings: resolvedSettings,
         baseName: project.name,
       })
       downloadBlob(result.blob, result.filename)
@@ -77,6 +84,32 @@ export function ExportDialog() {
       setExportError(error instanceof Error ? error.message : 'Eksport feilet av ukjent grunn.')
     } finally {
       setIsExporting(false)
+    }
+  }
+
+  async function handleZipExport() {
+    if (!originalFile || !originalBitmap || !project) return
+    setIsZipExporting(true)
+    setExportError(null)
+    try {
+      const palette = previewBitmap
+        ? extractDominantPaletteFromCanvas(
+            pipelineRef.current.compute(previewBitmap, project.effects, 'preview'),
+            5,
+          )
+        : []
+      const result = await buildProjectZip({
+        sourceBitmap: originalBitmap,
+        originalFile,
+        project: { ...project, exportSettings: resolvedSettings },
+        palette,
+      })
+      downloadBlob(result.blob, result.filename)
+      setOpen(false)
+    } catch (error) {
+      setExportError(error instanceof Error ? error.message : 'ZIP-eksport feilet av ukjent grunn.')
+    } finally {
+      setIsZipExporting(false)
     }
   }
 
@@ -212,7 +245,24 @@ export function ExportDialog() {
         </div>
 
         <DialogFooter>
-          <Button onClick={handleExport} disabled={isExporting}>
+          <Button
+            variant="outline"
+            onClick={() => void handleZipExport()}
+            disabled={isZipExporting || isExporting}
+          >
+            {isZipExporting ? (
+              <>
+                <Loader2 className="animate-spin" aria-hidden="true" />
+                Pakker...
+              </>
+            ) : (
+              <>
+                <FileArchive aria-hidden="true" />
+                ZIP (bilde + recipe + prosjekt)
+              </>
+            )}
+          </Button>
+          <Button onClick={() => void handleExport()} disabled={isExporting || isZipExporting}>
             {isExporting ? (
               <>
                 <Loader2 className="animate-spin" aria-hidden="true" />
