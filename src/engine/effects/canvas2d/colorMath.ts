@@ -4,6 +4,12 @@ export function clamp8(value: number): number {
   return value
 }
 
+export function clamp01(value: number): number {
+  if (value < 0) return 0
+  if (value > 1) return 1
+  return value
+}
+
 export type Rgb = { r: number; g: number; b: number }
 
 const DEFAULT_RGB: Rgb = { r: 0, g: 0, b: 0 }

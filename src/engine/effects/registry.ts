@@ -3,12 +3,22 @@ import { exposureEffect } from './definitions/exposure'
 import { contrastEffect } from './definitions/contrast'
 import { duotoneEffect } from './definitions/duotone'
 import { filmGrainEffect } from './definitions/filmGrain'
+import { vignetteEffect } from './definitions/vignette'
+import { posterizeEffect } from './definitions/posterize'
+import { rgbChannelShiftEffect } from './definitions/rgbChannelShift'
+import { pixelationEffect } from './definitions/pixelation'
+import { orderedDitheringEffect } from './definitions/orderedDithering'
 
 const EFFECT_DEFINITIONS: EffectDefinition[] = [
   exposureEffect,
   contrastEffect,
   duotoneEffect,
   filmGrainEffect,
+  vignetteEffect,
+  posterizeEffect,
+  rgbChannelShiftEffect,
+  pixelationEffect,
+  orderedDitheringEffect,
 ]
 
 const registry = new Map(EFFECT_DEFINITIONS.map((definition) => [definition.id, definition]))

@@ -7,9 +7,19 @@ import {
 } from './registry'
 
 describe('effect registry', () => {
-  it('lists the 4 Milestone-1 effect definitions', () => {
+  it('lists all 9 Priority-1 effect definitions', () => {
     const ids = listEffectDefinitions().map((d) => d.id)
-    expect(ids).toEqual(['exposure', 'contrast', 'duotone', 'film-grain'])
+    expect(ids).toEqual([
+      'exposure',
+      'contrast',
+      'duotone',
+      'film-grain',
+      'vignette',
+      'posterize',
+      'rgb-channel-shift',
+      'pixelation',
+      'ordered-dithering',
+    ])
   })
 
   it('throws a clear error for an unknown effect type', () => {
