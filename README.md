@@ -4,8 +4,9 @@ Et lokalt, nettleserbasert bildeeffekt-laboratorium og presentasjonsverktøy. La
 bygg en ikke-destruktiv effektkjede, og presenter transformasjonen som en interaktiv showcase —
 alt kjøres i din egen nettleser. Ingen bilder eller metadata forlater maskinen din.
 
-> **Status:** tidlig utvikling (milepæl M0 — prosjektskjelett). Effektmotor, opplasting,
-> eksport og showcase-modus er ikke implementert ennå. Se [Veikart](#veikart) for planen.
+> **Status:** tidlig utvikling (milepæl M1 — kjerneeditor). Opplasting, en ikke-destruktiv
+> effektkjede med fire effekter, og canvas-navigasjon fungerer. Metadata, eksport, AI Image
+> Recipe og showcase-modus er ikke implementert ennå. Se [Veikart](#veikart) for planen.
 
 ## Innhold
 
@@ -79,14 +80,19 @@ npm run preview       # Forhåndsvis produksjonsbygget lokalt
 ```
 src/
   types/        # Delt TypeScript-type-overflate (ImageProject, EffectNode, Showcase, ...)
-  engine/        # Effektmotor: registry, rendering-pipeline, seeded random, paletter (M1+)
-  state/         # Zustand-stores (view, project, editor, showcase)
+  engine/
+    effects/      # EffectDefinition-registry + pixel-transform-implementasjoner (canvas2d)
+    pipeline/     # RenderPipeline: kompositering + inkrementell cache
+    random/        # Seedet PRNG (mulberry32) for generative effekter
+    color/         # Blend mode-mapping, blend mode-labels
+    image/          # Bildeavkoding + nedskalert forhåndsvisning
+  state/         # Zustand-stores (view, project — inkl. historikk for angre/gjøre om)
   persistence/   # IndexedDB-repositories (M3+)
-  metadata/      # EXIF/XMP/IPTC-lesing og strip/keep-policy (M2+)
+  metadata/      # Grunnleggende metadata nå; EXIF/XMP/IPTC-lesing og strip/keep-policy (M2+)
   export/        # Bilde-, ZIP- og Recipe-eksport (M2/M3+)
   showcase/       # Interpolering og scroll-moduser (M4/M5+)
-  components/     # UI: layout, editor, showcase, metadata, recipe, export, ui (shadcn)
-  hooks/          # Delte React-hooks
+  components/     # UI: layout, editor (inkl. params/), showcase, ui (shadcn)
+  hooks/          # Delte React-hooks (tastatursnarveier)
   lib/            # Small utilities (cn-helper, filvalidering)
 ```
 
@@ -120,8 +126,11 @@ nettleserverifisering); resten er planlagt.
 
 - ✅ **M0 — Prosjektskjelett:** Vite/React/TS/Tailwind/shadcn-oppsett, full TypeScript-type-
   overflate, tomt layout-skall (TopBar/venstre-/høyre-panel/canvas-område).
-- ⬜ **M1 — Kjerneeditor:** opplasting, ikke-destruktiv effektmotor, effektbibliotek/-stakk-UI,
-  zoom/pan/før-etter, angre/gjøre om. Effekter: Exposure, Contrast, Duotone, Film grain.
+- ✅ **M1 — Kjerneeditor:** drag-and-drop-opplasting med validering, ikke-destruktiv effektmotor
+  (registry, kompositering med opacity/blend mode, seedet PRNG, inkrementell "dirty index"-cache),
+  effektbibliotek og effektstakk-UI (dnd-kit-omrokkering, aktiver/deaktiver, opacity, blend mode,
+  parameterkontroller, nullstill/dupliser/slett), canvas zoom/pan/tilpass-til-skjerm/før-etter,
+  angre/gjøre om med tastatursnarveier. Effekter: Exposure, Contrast, Duotone, Film grain (seedet).
 - ⬜ **M2 — Resten av Prioritet-1-effektene + metadata + eksport:** Vignette, Posterize, RGB
   channel shift, Pixelation, Ordered dithering; metadata-panel; PNG/JPG/WebP-eksport.
 - ⬜ **M3 — AI Image Recipe + prosjektlagring:** Markdown-oppskrift, ZIP-eksport,
