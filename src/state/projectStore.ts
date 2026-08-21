@@ -8,11 +8,13 @@ import type {
   ExportSettings,
   ImageProject,
   OriginalImageMetadata,
+  PromptRecipe,
 } from '@/types'
 import { createEffectNode, defaultParamsFor } from '@/engine/effects/registry'
 import { createPreviewBitmap, decodeImageFile } from '@/engine/image/imageLoading'
 import { readImageMetadata } from '@/metadata/readMetadata'
 import { validateImageFile } from '@/lib/fileValidation'
+import { saveProject as persistProject, loadProjectOriginal } from '@/persistence/projectRepository'
 
 const MAX_HISTORY_LENGTH = 50
 
@@ -35,8 +37,12 @@ type ProjectStore = {
   showBeforeAfter: boolean
   isLoading: boolean
   loadError: string | null
+  isSaving: boolean
+  saveError: string | null
 
   loadImage: (file: File) => Promise<void>
+  loadSavedProject: (project: ImageProject) => Promise<void>
+  saveCurrentProject: () => Promise<void>
   clearLoadError: () => void
 
   addEffect: (type: string) => void
@@ -58,6 +64,7 @@ type ProjectStore = {
   setCamera: (patch: Partial<CameraState>) => void
   toggleBeforeAfter: () => void
   updateExportSettings: (patch: Partial<ExportSettings>) => void
+  updateRecipeField: (patch: Partial<PromptRecipe>) => void
 
   undo: () => void
   redo: () => void
@@ -114,6 +121,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   showBeforeAfter: false,
   isLoading: false,
   loadError: null,
+  isSaving: false,
+  saveError: null,
 
   clearLoadError: () => set({ loadError: null }),
 
@@ -151,6 +160,60 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
           error instanceof Error
             ? `Kunne ikke lese bildet: ${error.message}`
             : 'Kunne ikke lese bildet.',
+      })
+    }
+  },
+
+  loadSavedProject: async (storedProject) => {
+    set({ isLoading: true, loadError: null })
+    try {
+      const blob = await loadProjectOriginal(storedProject.originalImageId)
+      if (!blob) throw new Error('Fant ikke det lagrede originalbildet.')
+
+      const file = new File([blob], storedProject.originalMetadata.fileName, {
+        type: storedProject.originalMetadata.mimeType,
+      })
+      const { bitmap: originalBitmap } = await decodeImageFile(file)
+      const previewBitmap = await createPreviewBitmap(originalBitmap)
+
+      const previousAssets = get().assets
+      previousAssets.originalBitmap?.close()
+      previousAssets.previewBitmap?.close()
+
+      set({
+        project: storedProject,
+        assets: { originalFile: file, originalBitmap, previewBitmap },
+        history: { past: [], future: [] },
+        selectedEffectId: null,
+        showBeforeAfter: false,
+        isLoading: false,
+      })
+    } catch (error) {
+      set({
+        isLoading: false,
+        loadError:
+          error instanceof Error
+            ? `Kunne ikke åpne prosjektet: ${error.message}`
+            : 'Kunne ikke åpne prosjektet.',
+      })
+    }
+  },
+
+  saveCurrentProject: async () => {
+    const { project, assets } = get()
+    if (!project || !assets.originalFile) return
+    set({ isSaving: true, saveError: null })
+    try {
+      const touched = touchProject(project)
+      await persistProject(touched, assets.originalFile)
+      set({ project: touched, isSaving: false })
+    } catch (error) {
+      set({
+        isSaving: false,
+        saveError:
+          error instanceof Error
+            ? `Kunne ikke lagre prosjektet: ${error.message}`
+            : 'Kunne ikke lagre prosjektet.',
       })
     }
   },
@@ -291,6 +354,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const { project } = get()
     if (!project) return
     set({ project: { ...project, exportSettings: { ...project.exportSettings, ...patch } } })
+  },
+
+  updateRecipeField: (patch) => {
+    const { project } = get()
+    if (!project) return
+    set({ project: { ...project, recipe: { ...project.recipe, ...patch } } })
   },
 
   undo: () => {
