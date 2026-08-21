@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useViewStore, type AppView } from '@/state/viewStore'
 import { useProjectStore } from '@/state/projectStore'
+import { ExportDialog } from '@/export/ExportDialog'
 
 export function TopBar() {
   const view = useViewStore((state) => state.view)
@@ -53,6 +54,8 @@ export function TopBar() {
           <Redo2 aria-hidden="true" />
         </Button>
       </div>
+
+      <ExportDialog />
 
       <div className="ml-auto">
         <Tabs value={view} onValueChange={(value) => setView(value as AppView)}>
