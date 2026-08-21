@@ -1,23 +1,37 @@
-import { useId } from 'react'
-import { Redo2, Sparkles, Undo2, Upload } from 'lucide-react'
+import { useId, useState } from 'react'
+import { Check, Redo2, Save, Sparkles, Undo2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useViewStore, type AppView } from '@/state/viewStore'
 import { useProjectStore } from '@/state/projectStore'
 import { ExportDialog } from '@/export/ExportDialog'
+import { ProjectsDialog } from '@/components/project/ProjectsDialog'
 
 export function TopBar() {
   const view = useViewStore((state) => state.view)
   const setView = useViewStore((state) => state.setView)
 
+  const hasProject = useProjectStore((state) => state.project !== null)
   const loadImage = useProjectStore((state) => state.loadImage)
+  const saveCurrentProject = useProjectStore((state) => state.saveCurrentProject)
+  const isSaving = useProjectStore((state) => state.isSaving)
+  const saveError = useProjectStore((state) => state.saveError)
   const undo = useProjectStore((state) => state.undo)
   const redo = useProjectStore((state) => state.redo)
   const canUndo = useProjectStore((state) => state.history.past.length > 0)
   const canRedo = useProjectStore((state) => state.history.future.length > 0)
 
+  const [justSaved, setJustSaved] = useState(false)
   const uploadInputId = useId()
+
+  async function handleSave() {
+    await saveCurrentProject()
+    if (!useProjectStore.getState().saveError) {
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 1500)
+    }
+  }
 
   return (
     <header className="border-border bg-background flex h-14 shrink-0 items-center gap-3 border-b px-4">
@@ -54,6 +68,24 @@ export function TopBar() {
           <Redo2 aria-hidden="true" />
         </Button>
       </div>
+
+      <ProjectsDialog />
+
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={!hasProject || isSaving}
+        onClick={() => void handleSave()}
+        aria-label="Lagre prosjekt lokalt"
+      >
+        {justSaved ? <Check aria-hidden="true" /> : <Save aria-hidden="true" />}
+        {justSaved ? 'Lagret' : 'Lagre'}
+      </Button>
+      {saveError && (
+        <span role="alert" className="text-destructive text-xs">
+          {saveError}
+        </span>
+      )}
 
       <ExportDialog />
 
