@@ -19,7 +19,7 @@ describe('App', () => {
 
     await user.click(screen.getByRole('tab', { name: 'Showcase' }))
 
-    expect(screen.getByText(/Showcase-editoren/)).toBeInTheDocument()
+    expect(screen.getByText(/Last opp et bilde for å bygge en showcase/)).toBeInTheDocument()
     expect(screen.queryByLabelText('Effektbibliotek')).not.toBeInTheDocument()
   })
 })
