@@ -1,20 +1,8 @@
 import { useEffect, useRef } from 'react'
 import { RenderPipeline } from '@/engine/pipeline/renderPipeline'
 import { renderToCanvas } from '@/engine/pipeline/renderToCanvas'
+import { formatMetadataExcerpt } from '@/showcase/formatMetadataExcerpt'
 import type { ImageProject, ShowcaseDisplaySettings, ShowcaseState } from '@/types'
-
-function formatMetadataExcerpt(metadata: ImageProject['originalMetadata']): string | null {
-  const parts: string[] = []
-  const camera = [metadata.camera?.make, metadata.camera?.model].filter(Boolean).join(' ')
-  if (camera) parts.push(camera)
-  if (metadata.lens?.model) parts.push(metadata.lens.model)
-  if (metadata.exposure?.iso !== undefined) parts.push(`ISO ${metadata.exposure.iso}`)
-  if (metadata.exposure?.fNumber !== undefined) parts.push(`f/${metadata.exposure.fNumber}`)
-  if (metadata.exposure?.exposureTime) parts.push(metadata.exposure.exposureTime)
-  if (parts.length === 0)
-    parts.push(`${metadata.dimensions.width} × ${metadata.dimensions.height} px`)
-  return parts.join(' · ')
-}
 
 type StorySectionProps = {
   state: ShowcaseState
