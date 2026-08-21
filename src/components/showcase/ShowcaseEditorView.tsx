@@ -22,7 +22,7 @@ import type { ScrollMode } from '@/types'
 
 const SCROLL_MODE_OPTIONS: { value: ScrollMode; label: string; implemented: boolean }[] = [
   { value: 'vertical-story', label: 'Vertical Story', implemented: true },
-  { value: 'before-after', label: 'Before / After', implemented: false },
+  { value: 'before-after', label: 'Before / After', implemented: true },
   { value: 'pinned-canvas', label: 'Pinned canvas (scrollytelling)', implemented: false },
   { value: 'horizontal-gallery', label: 'Horizontal gallery', implemented: false },
   { value: 'parallax', label: 'Parallax', implemented: false },
@@ -31,12 +31,12 @@ const SCROLL_MODE_OPTIONS: { value: ScrollMode; label: string; implemented: bool
 
 function EmptyPane({ message }: { message: string }) {
   return (
-    <div className="bg-muted/30 flex flex-1 items-center justify-center">
+    <main className="bg-muted/30 flex flex-1 items-center justify-center">
       <div className="text-muted-foreground flex flex-col items-center gap-3 text-center">
         <ImagePlus className="size-10" aria-hidden="true" />
         <p className="max-w-sm text-sm">{message}</p>
       </div>
-    </div>
+    </main>
   )
 }
 
@@ -90,7 +90,7 @@ export function ShowcaseEditorView() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <main className="flex min-h-0 flex-1 flex-col">
       <div className="border-border flex flex-wrap items-center gap-2 border-b p-3">
         <Button type="button" size="sm" onClick={() => void addStateFromCurrentEditor()}>
           <Plus aria-hidden="true" />
@@ -215,6 +215,6 @@ export function ShowcaseEditorView() {
           </section>
         </div>
       </ScrollArea>
-    </div>
+    </main>
   )
 }
