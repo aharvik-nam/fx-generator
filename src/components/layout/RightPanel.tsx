@@ -1,5 +1,6 @@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { EffectStack } from '@/components/editor/EffectStack'
 
 export function RightPanel() {
   return (
@@ -14,8 +15,8 @@ export function RightPanel() {
           <TabsTrigger value="recipe">Recipe</TabsTrigger>
         </TabsList>
         <ScrollArea className="flex-1">
-          <TabsContent value="stack" className="text-muted-foreground p-3 text-sm">
-            Effektstakken kommer i neste milepæl (M1).
+          <TabsContent value="stack" className="mt-0">
+            <EffectStack />
           </TabsContent>
           <TabsContent value="metadata" className="text-muted-foreground p-3 text-sm">
             Metadata-panelet kommer i M2.
