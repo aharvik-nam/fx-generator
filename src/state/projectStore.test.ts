@@ -42,7 +42,7 @@ function fakeProject(): ImageProject {
 beforeEach(() => {
   useProjectStore.setState({
     project: fakeProject(),
-    assets: { originalBitmap: null, previewBitmap: null },
+    assets: { originalFile: null, originalBitmap: null, previewBitmap: null },
     history: { past: [], future: [] },
     selectedEffectId: null,
     showBeforeAfter: false,

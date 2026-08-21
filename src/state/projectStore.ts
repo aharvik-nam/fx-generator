@@ -1,14 +1,23 @@
 import { create } from 'zustand'
 import { arrayMove } from '@dnd-kit/sortable'
-import type { BlendMode, CameraState, EffectNode, EffectParams, ImageProject } from '@/types'
+import type {
+  BlendMode,
+  CameraState,
+  EffectNode,
+  EffectParams,
+  ExportSettings,
+  ImageProject,
+  OriginalImageMetadata,
+} from '@/types'
 import { createEffectNode, defaultParamsFor } from '@/engine/effects/registry'
 import { createPreviewBitmap, decodeImageFile } from '@/engine/image/imageLoading'
-import { deriveBasicMetadata } from '@/metadata/basicMetadata'
+import { readImageMetadata } from '@/metadata/readMetadata'
 import { validateImageFile } from '@/lib/fileValidation'
 
 const MAX_HISTORY_LENGTH = 50
 
 type ProjectAssets = {
+  originalFile: File | null
   originalBitmap: ImageBitmap | null
   previewBitmap: ImageBitmap | null
 }
@@ -48,6 +57,7 @@ type ProjectStore = {
   selectEffect: (id: string | null) => void
   setCamera: (patch: Partial<CameraState>) => void
   toggleBeforeAfter: () => void
+  updateExportSettings: (patch: Partial<ExportSettings>) => void
 
   undo: () => void
   redo: () => void
@@ -66,7 +76,7 @@ function touchProject(project: ImageProject): ImageProject {
   return { ...project, updatedAt: new Date().toISOString() }
 }
 
-function createEmptyProject(file: File, width: number, height: number): ImageProject {
+function createEmptyProject(file: File, metadata: OriginalImageMetadata): ImageProject {
   const now = new Date().toISOString()
   return {
     id: crypto.randomUUID(),
@@ -74,7 +84,7 @@ function createEmptyProject(file: File, width: number, height: number): ImagePro
     createdAt: now,
     updatedAt: now,
     originalImageId: crypto.randomUUID(),
-    originalMetadata: deriveBasicMetadata(file, width, height),
+    originalMetadata: metadata,
     effects: [],
     camera: { zoom: 1, panX: 0, panY: 0 },
     recipe: {
@@ -98,7 +108,7 @@ function createEmptyProject(file: File, width: number, height: number): ImagePro
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   project: null,
-  assets: { originalBitmap: null, previewBitmap: null },
+  assets: { originalFile: null, originalBitmap: null, previewBitmap: null },
   history: { past: [], future: [] },
   selectedEffectId: null,
   showBeforeAfter: false,
@@ -117,15 +127,18 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set({ isLoading: true, loadError: null })
     try {
       const { bitmap: originalBitmap, width, height } = await decodeImageFile(file)
-      const previewBitmap = await createPreviewBitmap(originalBitmap)
+      const [previewBitmap, metadata] = await Promise.all([
+        createPreviewBitmap(originalBitmap),
+        readImageMetadata(file, width, height),
+      ])
 
       const previousAssets = get().assets
       previousAssets.originalBitmap?.close()
       previousAssets.previewBitmap?.close()
 
       set({
-        project: createEmptyProject(file, width, height),
-        assets: { originalBitmap, previewBitmap },
+        project: createEmptyProject(file, metadata),
+        assets: { originalFile: file, originalBitmap, previewBitmap },
         history: { past: [], future: [] },
         selectedEffectId: null,
         showBeforeAfter: false,
@@ -273,6 +286,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
 
   toggleBeforeAfter: () => set((state) => ({ showBeforeAfter: !state.showBeforeAfter })),
+
+  updateExportSettings: (patch) => {
+    const { project } = get()
+    if (!project) return
+    set({ project: { ...project, exportSettings: { ...project.exportSettings, ...patch } } })
+  },
 
   undo: () => {
     const { project, history } = get()
