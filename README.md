@@ -4,10 +4,10 @@ Et lokalt, nettleserbasert bildeeffekt-laboratorium og presentasjonsverktøy. La
 bygg en ikke-destruktiv effektkjede, og presenter transformasjonen som en interaktiv showcase —
 alt kjøres i din egen nettleser. Ingen bilder eller metadata forlater maskinen din.
 
-> **Status:** tidlig utvikling (milepæl M2 — fullført Prioritet-1-effektkatalog + metadata +
-> eksport). Opplasting, en ikke-destruktiv effektkjede med alle 9 Prioritet-1-effekter,
-> metadata-lesing/-visning og full oppløsning-eksport (PNG/JPG/WebP) fungerer. AI Image Recipe,
-> prosjektlagring og showcase-modus er ikke implementert ennå. Se [Veikart](#veikart) for planen.
+> **Status:** tidlig utvikling (milepæl M3 — AI Image Recipe + prosjektlagring). Opplasting, en
+> ikke-destruktiv effektkjede med alle 9 Prioritet-1-effekter, metadata-lesing/-visning, full
+> oppløsning-eksport, en redigerbar AI Image Recipe, og lokal prosjektlagring (IndexedDB) med
+> ZIP-eksport fungerer. Showcase-modus er ikke implementert ennå. Se [Veikart](#veikart) for planen.
 >
 > **Live:** [fx-generator.vercel.app](https://fx-generator.vercel.app)
 
@@ -35,12 +35,17 @@ Implementert så langt:
 - Metadata-panel: viser EXIF/GPS når tilgjengelig, med tydelig varsel for sensitive felt.
 - Eksporter til PNG/JPG/WebP i full oppløsning, med eksplisitt kontroll over om EXIF-metadata
   fjernes helt, delvis (sensitive felt fjernet), eller beholdes (kun JPEG).
+- Redigerbar **AI Image Recipe**: strukturerte felt (motiv/komposisjon/lys/stemning/stil) eller
+  direkte Markdown-redigering, automatisk uttrekk av fargepalett og effektkjede, kopier/last ned
+  `.md`, og formatering av prompten for Flux/SDXL/Midjourney/Gemini — med tydelig forbehold om at
+  en AI-prompt ikke garanterer en presis reproduksjon.
+- Lagre og åpne prosjekter lokalt (IndexedDB) — inkludert originalbildet, hele effektkjeden og
+  recipe-feltene.
+- Eksporter en komplett ZIP-pakke (bilde + `recipe.md` + `project.json`).
 
 Planlagt (se [Veikart](#veikart)):
 
-- Lagre prosjekter og presets lokalt (IndexedDB).
-- Generer en redigerbar, nedlastbar "AI Image Recipe" i Markdown, med prompt-formatering for
-  Flux, SDXL, Midjourney og Gemini.
+- Presets lokalt.
 - Bygg interaktive "Showcase"-presentasjoner av et bildes transformasjon gjennom flere navngitte
   states, med **Vertical Story**- og **Before/After**-visningsmoduser (flere kommer senere).
 
@@ -56,7 +61,7 @@ Planlagt (se [Veikart](#veikart)):
 | Metadata        | `exifr` (EXIF/XMP/IPTC-lesing), `piexifjs` (EXIF-reinjeksjon ved JPEG-eksport)                |
 | Zip-eksport     | `jszip`                                                                                       |
 | Drag-and-drop   | `@dnd-kit`                                                                                    |
-| Test            | Vitest + React Testing Library                                                                |
+| Test            | Vitest + React Testing Library (+ `fake-indexeddb` for persistence-tester)                    |
 | Lint/format     | oxlint (inkl. `jsx-a11y`, `typescript`, `react`-regelsett) + Prettier                         |
 
 Appen er en ren statisk frontend uten backend — det er ikke nødvendig med noen server- eller
@@ -98,13 +103,14 @@ src/
     random/        # Seedet PRNG (mulberry32) for generative effekter
     color/         # Blend mode-mapping, blend mode-labels
     image/          # Bildeavkoding + nedskalert forhåndsvisning
-  state/         # Zustand-stores (view, project — inkl. historikk for angre/gjøre om)
-  persistence/   # IndexedDB-repositories (M3+)
+  state/         # Zustand-stores (view, project — inkl. historikk, lagre/åpne prosjekt)
+  persistence/   # db.ts (idb-schema), projectRepository.ts (lagre/liste/hent/slett)
   metadata/      # exifr-basert EXIF/XMP/IPTC/GPS-lesing, strip/keep-sensitiv-policy
   export/        # imageExport (orkestrering + nedlasting), jpegMetadataInject (piexifjs),
-                  # ExportDialog-UI. ZIP/Recipe-eksport kommer i M3.
+                  # recipeGenerator (Markdown + provider-prompts), zipExport (jszip),
+                  # ExportDialog-UI
   showcase/       # Interpolering og scroll-moduser (M4/M5+)
-  components/     # UI: layout, editor (inkl. params/), metadata, ui (shadcn)
+  components/     # UI: layout, editor (inkl. params/), metadata, recipe, project, ui (shadcn)
   hooks/          # Delte React-hooks (tastatursnarveier)
   lib/            # Small utilities (cn-helper, filvalidering)
 ```
@@ -151,8 +157,12 @@ nettleserverifisering); resten er planlagt.
   metadata-panel (exifr, sensitive-felt-varsel); full oppløsning-eksport til PNG/JPEG/WebP i en
   Web Worker (OffscreenCanvas), med EXIF-reinjeksjon for JPEG via `piexifjs` — fjern alt / fjern
   sensitivt / behold alt.
-- ⬜ **M3 — AI Image Recipe + prosjektlagring:** Markdown-oppskrift, ZIP-eksport,
-  IndexedDB-prosjekter.
+- ✅ **M3 — AI Image Recipe + prosjektlagring:** Markdown-oppskrift generert fra kildedata,
+  metadata, fargepalett og effektkjede, med redigerbare motiv/komposisjon/lys/stemning/stil-felt,
+  en direkte-redigerbar Markdown-visning, kopier/last ned, og prompt-formatering for
+  Flux/SDXL/Midjourney/Gemini; lokal prosjektlagring i IndexedDB (originalbilde + effektkjede +
+  recipe) med en Prosjekter-dialog for å åpne/slette; ZIP-eksport av bilde + `recipe.md` +
+  `project.json`.
 - ⬜ **M4 — Showcase del 1:** showcase-datamodell, showcase-editor, Vertical Story.
 - ⬜ **M5 — Showcase del 2 + tilgjengelighet:** Before/After Explorer,
   `interpolateShowcaseState`, a11y- og mobiltilpasning. Fullfører MVP-en.
