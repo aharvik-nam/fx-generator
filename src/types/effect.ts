@@ -54,9 +54,15 @@ export type ParamSchemaEntry =
 
 export type RenderQuality = 'preview' | 'export'
 
+// OffscreenCanvas only (not HTMLCanvasElement | CanvasRenderingContext2D): individual effects
+// only ever operate on an off-DOM working canvas, whether rendering runs on the main thread
+// (preview) or inside a Worker (export). Keeping this DOM-type-free lets the whole effect
+// engine — registry, definitions, pipeline — be imported unchanged by render.worker.ts, which
+// compiles under the WebWorker lib (no HTMLCanvasElement) rather than DOM. The visible <canvas>
+// the user sees is a separate, later concern handled only by renderToCanvas.ts.
 export type RenderSurface = {
-  canvas: OffscreenCanvas | HTMLCanvasElement
-  ctx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D
+  canvas: OffscreenCanvas
+  ctx: OffscreenCanvasRenderingContext2D
 }
 
 export type EffectRenderContext = {

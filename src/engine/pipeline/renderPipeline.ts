@@ -78,12 +78,12 @@ export class RenderPipeline {
   private cacheEntries: CacheEntry[] = []
   private cachedSource: ImageBitmap | null = null
 
-  render(
-    target: HTMLCanvasElement,
+  /** Composites the chain and returns the resulting OffscreenCanvas (via the dirty-index cache). */
+  compute(
     source: ImageBitmap,
     effects: EffectNode[],
     quality: RenderQuality = 'preview',
-  ): void {
+  ): OffscreenCanvas {
     if (source !== this.cachedSource || this.cacheEntries.length === 0) {
       this.cacheEntries = [{ signature: '__source__', canvas: bitmapToCanvas(source) }]
       this.cachedSource = source
@@ -113,13 +113,7 @@ export class RenderPipeline {
       this.cacheEntries.push({ signature: signatureFor(node), canvas: resultCanvas })
     }
 
-    const finalCanvas = this.cacheEntries[effects.length].canvas
-    target.width = finalCanvas.width
-    target.height = finalCanvas.height
-    const ctx = target.getContext('2d')
-    if (!ctx) return
-    ctx.clearRect(0, 0, target.width, target.height)
-    ctx.drawImage(finalCanvas, 0, 0)
+    return this.cacheEntries[effects.length].canvas
   }
 
   reset(): void {

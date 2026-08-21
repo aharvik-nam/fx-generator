@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { useProjectStore } from '@/state/projectStore'
 import { RenderPipeline } from '@/engine/pipeline/renderPipeline'
+import { renderToCanvas } from '@/engine/pipeline/renderToCanvas'
 import type { CameraState, EffectNode } from '@/types'
 
 const MIN_ZOOM = 0.1
@@ -95,7 +96,8 @@ export function CanvasViewport() {
   // keeps a single render cheap, so there's nothing to gain from waiting a frame.
   useEffect(() => {
     if (!previewBitmap || !canvasRef.current) return
-    pipelineRef.current.render(
+    renderToCanvas(
+      pipelineRef.current,
       canvasRef.current,
       previewBitmap,
       showBeforeAfter ? [] : effects,
