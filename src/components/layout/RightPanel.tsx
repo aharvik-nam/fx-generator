@@ -2,6 +2,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { EffectStack } from '@/components/editor/EffectStack'
 import { MetadataPanel } from '@/components/metadata/MetadataPanel'
+import { RecipePanel } from '@/components/recipe/RecipePanel'
 
 export function RightPanel() {
   return (
@@ -22,8 +23,8 @@ export function RightPanel() {
           <TabsContent value="metadata" className="mt-0">
             <MetadataPanel />
           </TabsContent>
-          <TabsContent value="recipe" className="text-muted-foreground p-3 text-sm">
-            AI Image Recipe kommer i M3.
+          <TabsContent value="recipe" className="mt-0">
+            <RecipePanel />
           </TabsContent>
         </ScrollArea>
       </Tabs>
