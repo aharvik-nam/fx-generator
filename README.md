@@ -4,17 +4,18 @@ Et lokalt, nettleserbasert bildeeffekt-laboratorium og presentasjonsverktøy. La
 bygg en ikke-destruktiv effektkjede, og presenter transformasjonen som en interaktiv showcase —
 alt kjøres i din egen nettleser. Ingen bilder eller metadata forlater maskinen din.
 
-> **Status:** MVP-en er komplett (M0–M5). Opplasting, en ikke-destruktiv effektkjede med alle 9
-> Prioritet-1-effekter, metadata-lesing/-visning, full oppløsning-eksport, en redigerbar AI Image
-> Recipe, lokal prosjektlagring (IndexedDB) med ZIP-eksport, og Showcase-modus med **Vertical
-> Story**- og **Before/After Explorer**-visningsmoduser fungerer, med en tilgjengelighets- og
-> mobiltilpasningsgjennomgang. Se [Veikart](#veikart) for planen videre (M6 og post-MVP).
+> **Status:** MVP-en er komplett og ferdigstilt (M0–M6). Opplasting, en ikke-destruktiv effektkjede
+> med alle 9 Prioritet-1-effekter, metadata-lesing/-visning, full oppløsning-eksport, en
+> redigerbar AI Image Recipe, lokal prosjektlagring (IndexedDB) med ZIP-eksport, og Showcase-modus
+> med **Vertical Story**- og **Before/After Explorer**-visningsmoduser fungerer — verifisert
+> både lokalt og på den live Vercel-deployen. Se [Veikart](#veikart) for hva som er planlagt
+> post-MVP (bygges kun etter egen godkjenning).
 >
 > **Live:** [fx-generator.vercel.app](https://fx-generator.vercel.app)
 
 ## Innhold
 
-- [Funksjonalitet (planlagt)](#funksjonalitet-planlagt)
+- [Funksjonalitet](#funksjonalitet)
 - [Teknologi](#teknologi)
 - [Kom i gang](#kom-i-gang)
 - [Prosjektstruktur](#prosjektstruktur)
@@ -194,7 +195,11 @@ nettleserverifisering); resten er planlagt.
   (hopp-til-innhold-lenke, `<main>`-landemerker per visning); mobiltilpasning
   (`Sheet`-sidepaneler for effektbibliotek/-stakk under `lg`, en alltid synlig visningsbryter i
   topplinjen). Fullfører MVP-en.
-- ⬜ **M6 — Deploy-herding:** ferdigstille README, bekrefte live Vercel-deploy.
+- ✅ **M6 — Deploy-herding:** ferdigstilt README (rettet et gammelt TOC-anker-avvik), en full
+  verifiseringsrunde (typecheck/lint/test/build), og en manuell gjennomgang av den faktiske live
+  Vercel-deployen (ikke bare lokal dev) — opplasting, effektkjede, metadata, Showcase-editor,
+  Vertical Story og Before/After Explorer, og mobillayout, alt bekreftet fungerende på
+  [fx-generator.vercel.app](https://fx-generator.vercel.app).
 
 Post-MVP (ikke bygget uten egen godkjenning): pinned-canvas/scrollytelling, resten av
 Prioritet-2-effektkatalogen, presets-UI, masker-UI, horizontal-gallery/parallax/free-explore,
