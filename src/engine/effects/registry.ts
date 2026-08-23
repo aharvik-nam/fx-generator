@@ -10,6 +10,8 @@ import { pixelationEffect } from './definitions/pixelation'
 import { orderedDitheringEffect } from './definitions/orderedDithering'
 import { halftoneEffect } from './definitions/halftone'
 import { pixelSortEffect } from './definitions/pixelSort'
+import { outlineEffect } from './definitions/outline'
+import { thresholdEffect } from './definitions/threshold'
 
 const EFFECT_DEFINITIONS: EffectDefinition[] = [
   exposureEffect,
@@ -23,6 +25,8 @@ const EFFECT_DEFINITIONS: EffectDefinition[] = [
   orderedDitheringEffect,
   halftoneEffect,
   pixelSortEffect,
+  outlineEffect,
+  thresholdEffect,
 ]
 
 const registry = new Map(EFFECT_DEFINITIONS.map((definition) => [definition.id, definition]))

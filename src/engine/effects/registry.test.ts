@@ -21,6 +21,8 @@ describe('effect registry', () => {
       'ordered-dithering',
       'halftone',
       'pixel-sort',
+      'outline',
+      'threshold',
     ])
   })
 
