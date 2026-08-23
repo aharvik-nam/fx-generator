@@ -37,3 +37,21 @@ export function rgbToHex({ r, g, b }: Rgb): string {
   const toHex = (channel: number) => clamp8(Math.round(channel)).toString(16).padStart(2, '0')
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
+
+export function colorAt(data: Uint8ClampedArray, width: number, x: number, y: number): Rgb {
+  const i = (y * width + x) * 4
+  return { r: data[i], g: data[i + 1], b: data[i + 2] }
+}
+
+export function averageColor(data: Uint8ClampedArray): Rgb {
+  let r = 0
+  let g = 0
+  let b = 0
+  const count = data.length / 4
+  for (let i = 0; i < data.length; i += 4) {
+    r += data[i]
+    g += data[i + 1]
+    b += data[i + 2]
+  }
+  return { r: r / count, g: g / count, b: b / count }
+}

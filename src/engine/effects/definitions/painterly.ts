@@ -1,6 +1,7 @@
 import type { EffectDefinition, EffectRenderer } from '@/types'
-import { rgbToHex, type Rgb } from '../canvas2d/colorMath'
+import { averageColor, colorAt, rgbToHex } from '../canvas2d/colorMath'
 import { computeLuminanceGrid, sobelGradientAt } from '../canvas2d/sobelGradient'
+import { flowAngleAt } from '../canvas2d/flowField'
 import { mulberry32 } from '../../random/seededRandom'
 
 export type BrushStroke = { x: number; y: number; angle: number; length: number }
@@ -8,23 +9,6 @@ export type BrushStroke = { x: number; y: number; angle: number; length: number 
 /** Below this gradient magnitude a point is considered "flat" — there's no reliable edge
  * direction to follow, so the stroke falls back to `flowAngleAt` instead of a computed one. */
 const FLAT_MAGNITUDE_THRESHOLD = 5
-
-/**
- * A cheap position-based "flow field" — three sine waves at different frequencies/phases,
- * summed and scaled to an angle. Unlike calling `random()` per stroke (which makes neighboring
- * strokes point in wildly different directions and reads as scribbly noise), this varies
- * *smoothly* across the canvas, so nearby strokes in flat areas point roughly the same way,
- * the way a painter's brush keeps a consistent direction across a flat wash. `seed` shifts the
- * phase so different seeds still produce different-looking flows.
- */
-export function flowAngleAt(x: number, y: number, seed: number): number {
-  const phase = (seed % 1000) * 0.01
-  const wave =
-    Math.sin(x * 0.02 + phase) +
-    Math.sin(y * 0.017 + phase * 1.7) +
-    Math.sin((x + y) * 0.011 - phase * 0.6)
-  return (wave * Math.PI) / 2
-}
 
 /**
  * Painterly brush strokes: a jittered grid of sample points, each producing one stroke. Where
@@ -62,24 +46,6 @@ export function computeBrushStrokes(
     }
   }
   return strokes
-}
-
-function colorAt(data: Uint8ClampedArray, width: number, x: number, y: number): Rgb {
-  const i = (y * width + x) * 4
-  return { r: data[i], g: data[i + 1], b: data[i + 2] }
-}
-
-function averageColor(data: Uint8ClampedArray): Rgb {
-  let r = 0
-  let g = 0
-  let b = 0
-  const count = data.length / 4
-  for (let i = 0; i < data.length; i += 4) {
-    r += data[i]
-    g += data[i + 1]
-    b += data[i + 2]
-  }
-  return { r: r / count, g: g / count, b: b / count }
 }
 
 function createPainterlyRenderer(): EffectRenderer {
