@@ -69,7 +69,6 @@ export type EffectRenderContext = {
   params: EffectParams
   seed: number
   quality: RenderQuality
-  mask?: MaskReference
 }
 
 export type EffectRenderer = {

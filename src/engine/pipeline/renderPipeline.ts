@@ -1,6 +1,7 @@
 import type { BlendMode, EffectNode, RenderQuality } from '@/types'
 import { getEffectDefinition } from '../effects/registry'
 import { blendModeToCompositeOperation } from '../color/blend'
+import { applyMaskToLayer } from '../mask/applyMask'
 
 type CacheEntry = {
   signature: string
@@ -44,10 +45,7 @@ function applyEffectToCanvas(
   if (!ctx) throw new Error('2D-kontekst er ikke tilgjengelig for OffscreenCanvas.')
   const definition = getEffectDefinition(node.type)
   const renderer = definition.createRenderer()
-  renderer.apply(
-    { canvas, ctx },
-    { params: node.params, seed: node.seed ?? 0, quality, mask: node.mask },
-  )
+  renderer.apply({ canvas, ctx }, { params: node.params, seed: node.seed ?? 0, quality })
 }
 
 function compositeLayer(
@@ -106,6 +104,7 @@ export class RenderPipeline {
       if (node.enabled) {
         const layer = cloneCanvas(base)
         applyEffectToCanvas(layer, node, quality)
+        if (node.mask) applyMaskToLayer(layer, base, node.mask)
         resultCanvas = compositeLayer(base, layer, node.opacity, node.blendMode)
       } else {
         resultCanvas = cloneCanvas(base)
