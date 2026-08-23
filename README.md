@@ -32,7 +32,9 @@ Implementert så langt:
 - Bygg en ubegrenset, ikke-destruktiv effektkjede (rekkefølge, synlighet, opacity, blend mode,
   parametere) uten å røre originalfilen. Alle 9 Prioritet-1-effekter: Exposure, Contrast,
   Duotone, Film grain (seedet), Vignette, Posterize, RGB channel shift, Pixelation, Ordered
-  dithering.
+  dithering — pluss to Prioritet-2-effekter: Halftone (prikkrutenett med størrelse/prikkfarge/
+  bakgrunn) og Pixel sort (sorterer sammenhengende lyse pikselrekker etter lyshet for et
+  glitch-uttrykk).
 - Angre/gjøre om med tastatursnarveier.
 - Metadata-panel: viser EXIF/GPS når tilgjengelig, med tydelig varsel for sensitive felt.
 - Eksporter til PNG/JPG/WebP i full oppløsning, med eksplisitt kontroll over om EXIF-metadata
@@ -70,8 +72,8 @@ Implementert så langt:
 
 Planlagt (se [Veikart](#veikart)):
 
-- Resten av Prioritet-2-effektkatalogen, flere scroll-moduser, bitmap-masker (last opp et
-  egendefinert maskebilde).
+- Flere Prioritet-2-effekter (flow fields m.fl.), flere scroll-moduser, bitmap-masker (last opp
+  et egendefinert maskebilde).
 
 ## Teknologi
 
@@ -223,7 +225,9 @@ nettleserverifisering); resten er planlagt.
   maske-kompositeringen i `RenderPipeline` (fantes bare som type før — `EffectRenderContext`
   hadde et `mask`-felt ingen effekt faktisk leste). Bitmap-masker (eget opplastet maskebilde) er
   ikke bygget ennå — krever en egen asset-opplasting/-lagring, se Planlagt.
-- ⬜ Resten av Prioritet-2-effektkatalogen (halftone, pixel sort, flow fields, m.fl.).
+- ✅ **Prioritet-2-effekter (start):** Halftone og Pixel sort, samme `PixelTransform`-arkitektur
+  og param-/preset-/maske-støtte som alle andre effekter.
+- ⬜ Flere Prioritet-2-effekter: flow fields (krever en støyfunksjon appen ikke har ennå) m.fl.
 - ⬜ Flere scroll-moduser: horizontal-gallery, parallax, free-explore, pinned-canvas/scrollytelling
   (sistnevnte er det `interpolateShowcaseState` primært er bygget for).
 - ⬜ Bitmap-masker (last opp et egendefinert maskebilde som fjerde maske-type).
