@@ -39,9 +39,20 @@ Implementert så langt:
   basert på en lyshetsterskel, for et grafisk plakat-/skjermtrykk-uttrykk), **Cross-hatch**
   (penntegning-skravering — flere lag med linjer i ulik retning legges over hverandre jo mørkere
   et område er), **Stippling** (prikk-kunst — tettheten av jitrede, seedet-tilfeldige prikker
-  følger bildets lyshet) og **Painterly** (males på nytt som korte penselstrøk i farger hentet
+  følger bildets lyshet), **Painterly** (males på nytt som korte penselstrøk i farger hentet
   fra originalen, som følger kantene der bildet har tydelig struktur og et jevnt "flow field" der
-  det er flatt).
+  det er flatt), **Flow field** (buede linjer som følger et jevnt, generativt strømningsfelt over
+  hele bildet — samme flow-field-matte som Painterly, men som selve effekten i stedet for en
+  fallback), **Voronoi-mosaikk** (deler bildet inn i uregelmessige celler rundt tilfeldige punkter,
+  hver celle fylt med sin gjennomsnittsfarge), **Partikkelsystem** (fri, tilfeldig spredning av
+  partikler — tettest i bildets lyseste områder — på en mørk bakgrunn, som et stjernefelt),
+  **Celleautomat** (leser bildets mørke områder som et startmønster for "Game of Life" og lar det
+  utvikle seg et gitt antall generasjoner), **Fargekvantisering** (finner bildets egne dominerende
+  farger med k-means-klynging, i motsetning til Posterize sine faste nivåer), **Kaleidoskop**
+  (speilvendte kiler rundt et senterpunkt), **Kuwahara** (kant-bevarende utjevning — glatter ut
+  flate områder uten å myke opp kantene, i motsetning til vanlig uskarphet) og **Uskarphet /
+  skarphet** (én glidebryter fra full Gaussisk uskarphet, via ingen endring, til skarptegning med
+  unsharp mask).
 - Angre/gjøre om med tastatursnarveier.
 - Metadata-panel: viser EXIF/GPS når tilgjengelig, med tydelig varsel for sensitive felt.
 - Eksporter til PNG/JPG/WebP i full oppløsning, med eksplisitt kontroll over om EXIF-metadata
@@ -131,8 +142,10 @@ src/
   engine/
     effects/      # EffectDefinition-registry + pixel-transform-implementasjoner (canvas2d),
                   # inkl. canvas2d/sobelGradient.ts (delt Sobel-gradient-matte for
-                  # Outline/Painterly) og tegne-baserte renderere (Cross-hatch/Stippling/
-                  # Painterly: en ren geometri-funksjon + en tynn ctx.*-tegne-wrapper)
+                  # Outline/Painterly), canvas2d/flowField.ts (delt flow-field-vinkelfunksjon
+                  # for Painterly/Flow field) og tegne-baserte renderere (Cross-hatch/Stippling/
+                  # Painterly/Flow field/Partikkelsystem: en ren geometri-funksjon + en tynn
+                  # ctx.*-tegne-wrapper)
     pipeline/     # RenderPipeline (kompositering + inkrementell cache), renderToCanvas
                   # (DOM-blit for preview), render.worker.ts + exportRenderer.ts (full-res
                   # eksport i en Web Worker via OffscreenCanvas)
@@ -238,13 +251,20 @@ nettleserverifisering); resten er planlagt.
 - ✅ **Prioritet-2-effekter:** Halftone, Pixel sort, Outline (Sobel-kantdeteksjon) og Threshold
   (grafisk to-fargers lyshetsterskel) — samme `PixelTransform`-arkitektur og param-/preset-/
   maske-støtte som alle andre effekter.
-- ✅ **Kreativ programmering / generativ kunst-effekter:** Cross-hatch, Stippling og Painterly —
-  de første effektene som tegner direkte med Canvas-primitiver (`ctx.stroke()`/`ctx.arc()`)
-  i stedet for å transformere piksler, hver med en ren, enhetstestet geometri-funksjon atskilt
-  fra selve tegningen. Masking virker automatisk på disse også, siden masker komposisteres
-  generisk i `RenderPipeline` og ikke inne i den enkelte effekten.
-- ⬜ Flere generative/pixel-manipulasjons-effekter (se idéliste i prosjekthistorikken): flow
-  fields som egen effekt, ASCII-/tekst-mosaikk, Voronoi-mosaikk, glitch/datamosh-varianter m.fl.
+- ✅ **Kreativ programmering / generativ kunst-effekter (batch 1):** Cross-hatch, Stippling og
+  Painterly — de første effektene som tegner direkte med Canvas-primitiver
+  (`ctx.stroke()`/`ctx.arc()`) i stedet for å transformere piksler, hver med en ren, enhetstestet
+  geometri-funksjon atskilt fra selve tegningen. Masking virker automatisk på disse også, siden
+  masker komposisteres generisk i `RenderPipeline` og ikke inne i den enkelte effekten.
+- ✅ **Kreativ programmering / generativ kunst / pixelmanipulasjon-effekter (batch 2):** Flow
+  field, Voronoi-mosaikk, Partikkelsystem, Celleautomat, Fargekvantisering (k-means), Kaleidoskop,
+  Kuwahara og Uskarphet/skarphet (unsharp mask) — samme arkitektur- og test-mønster som batch 1
+  (tegne-baserte effekter: ren geometri + tynn `ctx.*`-wrapper; pixel-baserte effekter:
+  `PixelTransform`), pluss to nye rene algoritmer verifisert med klassiske testtilfeller
+  (Celleautomat mot kjente Game of Life-mønstre som blinker/block; Kuwahara mot en syntetisk
+  hard kant for å bevise kant-bevaring kontra vanlig uskarphet).
+- ⬜ Flere generative/pixel-manipulasjons-effekter (se idéliste i prosjekthistorikken):
+  Delaunay-triangulering (low-poly), ASCII-/tekst-mosaikk, glitch/datamosh-varianter m.fl.
 - ⬜ Flere scroll-moduser: horizontal-gallery, parallax, free-explore, pinned-canvas/scrollytelling
   (sistnevnte er det `interpolateShowcaseState` primært er bygget for).
 - ⬜ Bitmap-masker (last opp et egendefinert maskebilde som fjerde maske-type).
