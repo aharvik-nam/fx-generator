@@ -32,11 +32,16 @@ Implementert så langt:
 - Bygg en ubegrenset, ikke-destruktiv effektkjede (rekkefølge, synlighet, opacity, blend mode,
   parametere) uten å røre originalfilen. Alle 9 Prioritet-1-effekter: Exposure, Contrast,
   Duotone, Film grain (seedet), Vignette, Posterize, RGB channel shift, Pixelation, Ordered
-  dithering — pluss fire Prioritet-2-effekter: Halftone (prikkrutenett med størrelse/prikkfarge/
-  bakgrunn), Pixel sort (sorterer sammenhengende lyse pikselrekker etter lyshet for et
+  dithering — pluss et voksende Prioritet-2-katalog: Halftone (prikkrutenett med størrelse/
+  prikkfarge/bakgrunn), Pixel sort (sorterer sammenhengende lyse pikselrekker etter lyshet for et
   glitch-uttrykk), **Outline** (kantdeteksjon med Sobel-operator — tegner konturene i bildet
-  som linjer på en ensfarget bakgrunn) og **Threshold** (reduserer bildet til to flate farger
-  basert på en lyshetsterskel, for et grafisk plakat-/skjermtrykk-uttrykk).
+  som linjer på en ensfarget bakgrunn), **Threshold** (reduserer bildet til to flate farger
+  basert på en lyshetsterskel, for et grafisk plakat-/skjermtrykk-uttrykk), **Cross-hatch**
+  (penntegning-skravering — flere lag med linjer i ulik retning legges over hverandre jo mørkere
+  et område er), **Stippling** (prikk-kunst — tettheten av jitrede, seedet-tilfeldige prikker
+  følger bildets lyshet) og **Painterly** (males på nytt som korte penselstrøk i farger hentet
+  fra originalen, som følger kantene der bildet har tydelig struktur og et jevnt "flow field" der
+  det er flatt).
 - Angre/gjøre om med tastatursnarveier.
 - Metadata-panel: viser EXIF/GPS når tilgjengelig, med tydelig varsel for sensitive felt.
 - Eksporter til PNG/JPG/WebP i full oppløsning, med eksplisitt kontroll over om EXIF-metadata
@@ -124,7 +129,10 @@ npm run preview       # Forhåndsvis produksjonsbygget lokalt
 src/
   types/        # Delt TypeScript-type-overflate (ImageProject, EffectNode, Showcase, ...)
   engine/
-    effects/      # EffectDefinition-registry + pixel-transform-implementasjoner (canvas2d)
+    effects/      # EffectDefinition-registry + pixel-transform-implementasjoner (canvas2d),
+                  # inkl. canvas2d/sobelGradient.ts (delt Sobel-gradient-matte for
+                  # Outline/Painterly) og tegne-baserte renderere (Cross-hatch/Stippling/
+                  # Painterly: en ren geometri-funksjon + en tynn ctx.*-tegne-wrapper)
     pipeline/     # RenderPipeline (kompositering + inkrementell cache), renderToCanvas
                   # (DOM-blit for preview), render.worker.ts + exportRenderer.ts (full-res
                   # eksport i en Web Worker via OffscreenCanvas)
@@ -230,7 +238,13 @@ nettleserverifisering); resten er planlagt.
 - ✅ **Prioritet-2-effekter:** Halftone, Pixel sort, Outline (Sobel-kantdeteksjon) og Threshold
   (grafisk to-fargers lyshetsterskel) — samme `PixelTransform`-arkitektur og param-/preset-/
   maske-støtte som alle andre effekter.
-- ⬜ Flere Prioritet-2-effekter: flow fields (krever en støyfunksjon appen ikke har ennå) m.fl.
+- ✅ **Kreativ programmering / generativ kunst-effekter:** Cross-hatch, Stippling og Painterly —
+  de første effektene som tegner direkte med Canvas-primitiver (`ctx.stroke()`/`ctx.arc()`)
+  i stedet for å transformere piksler, hver med en ren, enhetstestet geometri-funksjon atskilt
+  fra selve tegningen. Masking virker automatisk på disse også, siden masker komposisteres
+  generisk i `RenderPipeline` og ikke inne i den enkelte effekten.
+- ⬜ Flere generative/pixel-manipulasjons-effekter (se idéliste i prosjekthistorikken): flow
+  fields som egen effekt, ASCII-/tekst-mosaikk, Voronoi-mosaikk, glitch/datamosh-varianter m.fl.
 - ⬜ Flere scroll-moduser: horizontal-gallery, parallax, free-explore, pinned-canvas/scrollytelling
   (sistnevnte er det `interpolateShowcaseState` primært er bygget for).
 - ⬜ Bitmap-masker (last opp et egendefinert maskebilde som fjerde maske-type).
