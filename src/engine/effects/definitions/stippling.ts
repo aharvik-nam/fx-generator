@@ -1,0 +1,105 @@
+import type { EffectDefinition, EffectRenderer } from '@/types'
+import { clamp01 } from '../canvas2d/colorMath'
+import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
+import { mulberry32 } from '../../random/seededRandom'
+
+export type StippleDot = { x: number; y: number; radius: number }
+
+/**
+ * Stippling: unlike Halftone (a regular grid of dots whose *size* tracks darkness), stippling
+ * keeps dots roughly the same size and instead varies how *many* land in each cell — darker
+ * cells are more likely to get a dot, and each dot's position is jittered off the cell center —
+ * for an irregular, hand-drawn ink-dot texture. Pure and seeded, so it's deterministic and
+ * unit-testable without a canvas; the renderer below only turns the returned dots into
+ * `ctx.arc()` fills.
+ */
+export function computeStippleDots(
+  luminance: Float32Array,
+  width: number,
+  height: number,
+  cellSize: number,
+  density: number,
+  dotSize: number,
+  seed: number,
+): StippleDot[] {
+  const random = mulberry32(seed)
+  const dots: StippleDot[] = []
+
+  for (let cellY = 0; cellY < height; cellY += cellSize) {
+    for (let cellX = 0; cellX < width; cellX += cellSize) {
+      const sampleX = Math.min(width - 1, Math.floor(cellX + cellSize / 2))
+      const sampleY = Math.min(height - 1, Math.floor(cellY + cellSize / 2))
+      const darkness = 1 - luminance[sampleY * width + sampleX] / 255
+      const probability = clamp01(darkness * density)
+      if (random() >= probability) continue
+
+      const jitterX = (random() - 0.5) * cellSize
+      const jitterY = (random() - 0.5) * cellSize
+      dots.push({
+        x: cellX + cellSize / 2 + jitterX,
+        y: cellY + cellSize / 2 + jitterY,
+        radius: dotSize * (0.6 + random() * 0.8),
+      })
+    }
+  }
+  return dots
+}
+
+function createStipplingRenderer(): EffectRenderer {
+  return {
+    apply(surface, context) {
+      const { canvas, ctx } = surface
+      const width = canvas.width
+      const height = canvas.height
+      const params = context.params
+      const cellSize = Math.max(
+        2,
+        Math.round(typeof params.cellSize === 'number' ? params.cellSize : 6),
+      )
+      const density = typeof params.density === 'number' ? params.density : 1.5
+      const dotSize = typeof params.dotSize === 'number' ? params.dotSize : 1.5
+      const dotColor = typeof params.dotColor === 'string' ? params.dotColor : '#000000'
+      const background = typeof params.background === 'string' ? params.background : '#ffffff'
+
+      const source = ctx.getImageData(0, 0, width, height)
+      const luminance = computeLuminanceGrid(source.data, width, height)
+      const dots = computeStippleDots(
+        luminance,
+        width,
+        height,
+        cellSize,
+        density,
+        dotSize,
+        context.seed,
+      )
+
+      ctx.fillStyle = background
+      ctx.fillRect(0, 0, width, height)
+
+      ctx.fillStyle = dotColor
+      for (const dot of dots) {
+        ctx.beginPath()
+        ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2)
+        ctx.fill()
+      }
+    },
+  }
+}
+
+export const stipplingEffect: EffectDefinition = {
+  id: 'stippling',
+  name: 'Stippling',
+  category: 'stylize',
+  description:
+    'Tegner bildet på nytt som tettpakkede blekkprikker — mørke områder får flere, tilfeldig plasserte prikker enn lyse.',
+  rendererKind: 'canvas2d',
+  usesSeed: true,
+  paramSchema: {
+    cellSize: { kind: 'slider', min: 2, max: 20, step: 1, default: 6, label: 'Cellestørrelse' },
+    density: { kind: 'slider', min: 0.5, max: 3, step: 0.1, default: 1.5, label: 'Tetthet' },
+    dotSize: { kind: 'slider', min: 0.5, max: 5, step: 0.1, default: 1.5, label: 'Prikkstørrelse' },
+    dotColor: { kind: 'color', default: '#000000', label: 'Prikkfarge' },
+    background: { kind: 'color', default: '#ffffff', label: 'Bakgrunn' },
+  },
+  createRenderer: createStipplingRenderer,
+}
