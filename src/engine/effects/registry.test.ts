@@ -23,6 +23,9 @@ describe('effect registry', () => {
       'pixel-sort',
       'outline',
       'threshold',
+      'cross-hatch',
+      'stippling',
+      'painterly',
     ])
   })
 

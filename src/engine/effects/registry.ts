@@ -12,6 +12,9 @@ import { halftoneEffect } from './definitions/halftone'
 import { pixelSortEffect } from './definitions/pixelSort'
 import { outlineEffect } from './definitions/outline'
 import { thresholdEffect } from './definitions/threshold'
+import { crossHatchEffect } from './definitions/crossHatch'
+import { stipplingEffect } from './definitions/stippling'
+import { painterlyEffect } from './definitions/painterly'
 
 const EFFECT_DEFINITIONS: EffectDefinition[] = [
   exposureEffect,
@@ -27,6 +30,9 @@ const EFFECT_DEFINITIONS: EffectDefinition[] = [
   pixelSortEffect,
   outlineEffect,
   thresholdEffect,
+  crossHatchEffect,
+  stipplingEffect,
+  painterlyEffect,
 ]
 
 const registry = new Map(EFFECT_DEFINITIONS.map((definition) => [definition.id, definition]))
