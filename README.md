@@ -58,10 +58,14 @@ Implementert så langt:
   effektstakk/metadata/recipe åpnes som sideskuffer (`Sheet`) under `lg`-brytepunktet i stedet for
   faste sidepaneler, og topplinjen beholder visningsbryteren (Editor/Showcase/Forhåndsvis)
   synlig mens resten av knapperaden kan scrolles horisontalt ved behov.
+- **Presets:** lagre gjeldende parametere for en effekt som en navngitt preset (lokalt i
+  IndexedDB), bruk den på et eksisterende effekt-node, eller legg til en helt ny effekt
+  ferdig-fylt med presetens parametere direkte fra effektbiblioteket. Presets er ikke knyttet
+  til ett bilde eller prosjekt — de er tilgjengelige uansett hvilket bilde du jobber med.
 
 Planlagt (se [Veikart](#veikart)):
 
-- Presets lokalt.
+- Masker-UI, resten av Prioritet-2-effektkatalogen, flere scroll-moduser.
 
 ## Teknologi
 
@@ -117,8 +121,10 @@ src/
     random/        # Seedet PRNG (mulberry32) for generative effekter
     color/         # Blend mode-mapping, blend mode-labels
     image/          # Bildeavkoding + nedskalert forhåndsvisning
-  state/         # Zustand-stores (view, project — inkl. historikk, lagre/åpne prosjekt — og showcase)
-  persistence/   # db.ts (idb-schema), projectRepository.ts, showcaseRepository.ts (lagre/hent/slett)
+  state/         # Zustand-stores (view, project — inkl. historikk, lagre/åpne prosjekt — showcase,
+                  # og presets)
+  persistence/   # db.ts (idb-schema), projectRepository.ts, showcaseRepository.ts,
+                  # presetRepository.ts (lagre/hent/slett)
   metadata/      # exifr-basert EXIF/XMP/IPTC/GPS-lesing, strip/keep-sensitiv-policy
   export/        # imageExport (orkestrering + nedlasting), jpegMetadataInject (piexifjs),
                   # recipeGenerator (Markdown + provider-prompts), zipExport (jszip),
@@ -201,9 +207,20 @@ nettleserverifisering); resten er planlagt.
   Vertical Story og Before/After Explorer, og mobillayout, alt bekreftet fungerende på
   [fx-generator.vercel.app](https://fx-generator.vercel.app).
 
-Post-MVP (ikke bygget uten egen godkjenning): pinned-canvas/scrollytelling, resten av
-Prioritet-2-effektkatalogen, presets-UI, masker-UI, horizontal-gallery/parallax/free-explore,
-deling av showcase via URL, video/GIF-eksport, sandkassekjørt egendefinert shader/JS.
+### Etter MVP
+
+- ✅ **Presets:** lagre/bruke/slette lokale parameter-presets per effekttype (se
+  [Funksjonalitet](#funksjonalitet)).
+- ⬜ Masker-UI (linear/radial gradient, luminosity, bitmap — typene finnes allerede i
+  `MaskReference`).
+- ⬜ Resten av Prioritet-2-effektkatalogen (halftone, pixel sort, flow fields, m.fl.).
+- ⬜ Flere scroll-moduser: horizontal-gallery, parallax, free-explore, pinned-canvas/scrollytelling
+  (sistnevnte er det `interpolateShowcaseState` primært er bygget for).
+
+Ikke bygget uten egen godkjenning (større arkitektur-avveininger): deling av showcase via URL
+(bryter "alt lokalt"-prinsippet uten en backend), video/GIF-eksport (krever en ny
+enkoder-avhengighet), sandkassekjørt egendefinert shader/JS (kjøring av vilkårlig brukerkode må
+sandboxes forsvarlig).
 
 ## Deploy til Vercel
 
