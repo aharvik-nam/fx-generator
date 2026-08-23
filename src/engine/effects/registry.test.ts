@@ -7,7 +7,7 @@ import {
 } from './registry'
 
 describe('effect registry', () => {
-  it('lists all 9 Priority-1 effect definitions', () => {
+  it('lists all 9 Priority-1 effect definitions plus post-MVP Priority-2 additions', () => {
     const ids = listEffectDefinitions().map((d) => d.id)
     expect(ids).toEqual([
       'exposure',
@@ -19,6 +19,8 @@ describe('effect registry', () => {
       'rgb-channel-shift',
       'pixelation',
       'ordered-dithering',
+      'halftone',
+      'pixel-sort',
     ])
   })
 

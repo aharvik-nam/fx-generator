@@ -8,6 +8,8 @@ import { posterizeEffect } from './definitions/posterize'
 import { rgbChannelShiftEffect } from './definitions/rgbChannelShift'
 import { pixelationEffect } from './definitions/pixelation'
 import { orderedDitheringEffect } from './definitions/orderedDithering'
+import { halftoneEffect } from './definitions/halftone'
+import { pixelSortEffect } from './definitions/pixelSort'
 
 const EFFECT_DEFINITIONS: EffectDefinition[] = [
   exposureEffect,
@@ -19,6 +21,8 @@ const EFFECT_DEFINITIONS: EffectDefinition[] = [
   rgbChannelShiftEffect,
   pixelationEffect,
   orderedDitheringEffect,
+  halftoneEffect,
+  pixelSortEffect,
 ]
 
 const registry = new Map(EFFECT_DEFINITIONS.map((definition) => [definition.id, definition]))
