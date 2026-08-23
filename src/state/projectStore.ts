@@ -7,6 +7,7 @@ import type {
   EffectParams,
   ExportSettings,
   ImageProject,
+  MaskReference,
   OriginalImageMetadata,
   PromptRecipe,
 } from '@/types'
@@ -61,6 +62,7 @@ type ProjectStore = {
   ) => void
   resetEffectParams: (id: string) => void
   applyEffectParams: (id: string, params: EffectParams) => void
+  setEffectMask: (id: string, mask: MaskReference, options?: { commit?: boolean }) => void
 
   selectEffect: (id: string | null) => void
   setCamera: (patch: Partial<CameraState>) => void
@@ -353,6 +355,19 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       project: touchProject({
         ...project,
         effects: project.effects.map((e) => (e.id === id ? { ...e, params } : e)),
+      }),
+    })
+  },
+
+  setEffectMask: (id, mask, options) => {
+    const { project, history } = get()
+    if (!project) return
+    const commit = options?.commit ?? true
+    set({
+      history: commit ? pushHistory(history, project.effects) : history,
+      project: touchProject({
+        ...project,
+        effects: project.effects.map((e) => (e.id === id ? { ...e, mask } : e)),
       }),
     })
   },

@@ -123,6 +123,29 @@ describe('projectStore effect chain mutations', () => {
     useProjectStore.getState().applyEffectParams(id, { stops: -1 })
     expect(useProjectStore.getState().project!.effects[0].params).toEqual({ stops: -1 })
   })
+
+  it('sets a mask on an effect', () => {
+    useProjectStore.getState().addEffect('exposure')
+    const id = useProjectStore.getState().project!.effects[0].id
+    useProjectStore
+      .getState()
+      .setEffectMask(id, { kind: 'linear-gradient', angle: 45, feather: 0.5 })
+    expect(useProjectStore.getState().project!.effects[0].mask).toEqual({
+      kind: 'linear-gradient',
+      angle: 45,
+      feather: 0.5,
+    })
+  })
+
+  it('does not push history when setEffectMask is called with commit: false', () => {
+    useProjectStore.getState().addEffect('exposure')
+    const before = useProjectStore.getState().history.past.length
+    const id = useProjectStore.getState().project!.effects[0].id
+    useProjectStore
+      .getState()
+      .setEffectMask(id, { kind: 'linear-gradient', angle: 10, feather: 0.5 }, { commit: false })
+    expect(useProjectStore.getState().history.past.length).toBe(before)
+  })
 })
 
 describe('projectStore undo/redo', () => {
