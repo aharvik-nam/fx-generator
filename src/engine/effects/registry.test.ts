@@ -26,6 +26,14 @@ describe('effect registry', () => {
       'cross-hatch',
       'stippling',
       'painterly',
+      'flow-field',
+      'voronoi',
+      'particles',
+      'cellular-automaton',
+      'color-quantize',
+      'kaleidoscope',
+      'kuwahara',
+      'blur-sharpen',
     ])
   })
 

@@ -15,6 +15,14 @@ import { thresholdEffect } from './definitions/threshold'
 import { crossHatchEffect } from './definitions/crossHatch'
 import { stipplingEffect } from './definitions/stippling'
 import { painterlyEffect } from './definitions/painterly'
+import { flowFieldEffect } from './definitions/flowField'
+import { voronoiEffect } from './definitions/voronoi'
+import { particlesEffect } from './definitions/particles'
+import { cellularAutomatonEffect } from './definitions/cellularAutomaton'
+import { colorQuantizeEffect } from './definitions/colorQuantize'
+import { kaleidoscopeEffect } from './definitions/kaleidoscope'
+import { kuwaharaEffect } from './definitions/kuwahara'
+import { blurSharpenEffect } from './definitions/blurSharpen'
 
 const EFFECT_DEFINITIONS: EffectDefinition[] = [
   exposureEffect,
@@ -33,6 +41,14 @@ const EFFECT_DEFINITIONS: EffectDefinition[] = [
   crossHatchEffect,
   stipplingEffect,
   painterlyEffect,
+  flowFieldEffect,
+  voronoiEffect,
+  particlesEffect,
+  cellularAutomatonEffect,
+  colorQuantizeEffect,
+  kaleidoscopeEffect,
+  kuwaharaEffect,
+  blurSharpenEffect,
 ]
 
 const registry = new Map(EFFECT_DEFINITIONS.map((definition) => [definition.id, definition]))
