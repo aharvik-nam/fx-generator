@@ -62,10 +62,16 @@ Implementert så langt:
   IndexedDB), bruk den på et eksisterende effekt-node, eller legg til en helt ny effekt
   ferdig-fylt med presetens parametere direkte fra effektbiblioteket. Presets er ikke knyttet
   til ett bilde eller prosjekt — de er tilgjengelige uansett hvilket bilde du jobber med.
+- **Masker:** begrens en hvilken som helst effekt til deler av bildet — per-effekt maske med
+  lineær gradient (vinkel + myking), radial gradient (senter, radius, myking), eller lyshet
+  (bruker bildets egne toner, med valgfri invertering). Rent kompositert (masken klipper kun
+  effektens alfakanal før den legges over grunnlaget), så samme maske virker uansett hvilken
+  effekt den ligger på.
 
 Planlagt (se [Veikart](#veikart)):
 
-- Masker-UI, resten av Prioritet-2-effektkatalogen, flere scroll-moduser.
+- Resten av Prioritet-2-effektkatalogen, flere scroll-moduser, bitmap-masker (last opp et
+  egendefinert maskebilde).
 
 ## Teknologi
 
@@ -118,6 +124,8 @@ src/
     pipeline/     # RenderPipeline (kompositering + inkrementell cache), renderToCanvas
                   # (DOM-blit for preview), render.worker.ts + exportRenderer.ts (full-res
                   # eksport i en Web Worker via OffscreenCanvas)
+    mask/          # maskMath.ts (ren maske-verdi-funksjon per type), applyMask.ts (klipper et
+                  # effektlags alfakanal — brukt av RenderPipeline, ikke av effektene selv)
     random/        # Seedet PRNG (mulberry32) for generative effekter
     color/         # Blend mode-mapping, blend mode-labels
     image/          # Bildeavkoding + nedskalert forhåndsvisning
@@ -211,11 +219,14 @@ nettleserverifisering); resten er planlagt.
 
 - ✅ **Presets:** lagre/bruke/slette lokale parameter-presets per effekttype (se
   [Funksjonalitet](#funksjonalitet)).
-- ⬜ Masker-UI (linear/radial gradient, luminosity, bitmap — typene finnes allerede i
-  `MaskReference`).
+- ✅ **Masker:** lineær gradient, radial gradient og lyshetsmasker, pluss selve
+  maske-kompositeringen i `RenderPipeline` (fantes bare som type før — `EffectRenderContext`
+  hadde et `mask`-felt ingen effekt faktisk leste). Bitmap-masker (eget opplastet maskebilde) er
+  ikke bygget ennå — krever en egen asset-opplasting/-lagring, se Planlagt.
 - ⬜ Resten av Prioritet-2-effektkatalogen (halftone, pixel sort, flow fields, m.fl.).
 - ⬜ Flere scroll-moduser: horizontal-gallery, parallax, free-explore, pinned-canvas/scrollytelling
   (sistnevnte er det `interpolateShowcaseState` primært er bygget for).
+- ⬜ Bitmap-masker (last opp et egendefinert maskebilde som fjerde maske-type).
 
 Ikke bygget uten egen godkjenning (større arkitektur-avveininger): deling av showcase via URL
 (bryter "alt lokalt"-prinsippet uten en backend), video/GIF-eksport (krever en ny
