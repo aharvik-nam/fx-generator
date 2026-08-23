@@ -32,9 +32,11 @@ Implementert så langt:
 - Bygg en ubegrenset, ikke-destruktiv effektkjede (rekkefølge, synlighet, opacity, blend mode,
   parametere) uten å røre originalfilen. Alle 9 Prioritet-1-effekter: Exposure, Contrast,
   Duotone, Film grain (seedet), Vignette, Posterize, RGB channel shift, Pixelation, Ordered
-  dithering — pluss to Prioritet-2-effekter: Halftone (prikkrutenett med størrelse/prikkfarge/
-  bakgrunn) og Pixel sort (sorterer sammenhengende lyse pikselrekker etter lyshet for et
-  glitch-uttrykk).
+  dithering — pluss fire Prioritet-2-effekter: Halftone (prikkrutenett med størrelse/prikkfarge/
+  bakgrunn), Pixel sort (sorterer sammenhengende lyse pikselrekker etter lyshet for et
+  glitch-uttrykk), **Outline** (kantdeteksjon med Sobel-operator — tegner konturene i bildet
+  som linjer på en ensfarget bakgrunn) og **Threshold** (reduserer bildet til to flate farger
+  basert på en lyshetsterskel, for et grafisk plakat-/skjermtrykk-uttrykk).
 - Angre/gjøre om med tastatursnarveier.
 - Metadata-panel: viser EXIF/GPS når tilgjengelig, med tydelig varsel for sensitive felt.
 - Eksporter til PNG/JPG/WebP i full oppløsning, med eksplisitt kontroll over om EXIF-metadata
@@ -225,8 +227,9 @@ nettleserverifisering); resten er planlagt.
   maske-kompositeringen i `RenderPipeline` (fantes bare som type før — `EffectRenderContext`
   hadde et `mask`-felt ingen effekt faktisk leste). Bitmap-masker (eget opplastet maskebilde) er
   ikke bygget ennå — krever en egen asset-opplasting/-lagring, se Planlagt.
-- ✅ **Prioritet-2-effekter (start):** Halftone og Pixel sort, samme `PixelTransform`-arkitektur
-  og param-/preset-/maske-støtte som alle andre effekter.
+- ✅ **Prioritet-2-effekter:** Halftone, Pixel sort, Outline (Sobel-kantdeteksjon) og Threshold
+  (grafisk to-fargers lyshetsterskel) — samme `PixelTransform`-arkitektur og param-/preset-/
+  maske-støtte som alle andre effekter.
 - ⬜ Flere Prioritet-2-effekter: flow fields (krever en støyfunksjon appen ikke har ennå) m.fl.
 - ⬜ Flere scroll-moduser: horizontal-gallery, parallax, free-explore, pinned-canvas/scrollytelling
   (sistnevnte er det `interpolateShowcaseState` primært er bygget for).
