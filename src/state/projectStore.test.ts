@@ -111,6 +111,18 @@ describe('projectStore effect chain mutations', () => {
     useProjectStore.getState().resetEffectParams(id)
     expect(useProjectStore.getState().project!.effects[0].params.stops).toBe(0)
   })
+
+  it('adds an effect with an initial params override (applying a preset)', () => {
+    useProjectStore.getState().addEffect('exposure', { stops: 2.5 })
+    expect(useProjectStore.getState().project!.effects[0].params).toEqual({ stops: 2.5 })
+  })
+
+  it('applies a full params object to an existing effect (applying a preset)', () => {
+    useProjectStore.getState().addEffect('exposure')
+    const id = useProjectStore.getState().project!.effects[0].id
+    useProjectStore.getState().applyEffectParams(id, { stops: -1 })
+    expect(useProjectStore.getState().project!.effects[0].params).toEqual({ stops: -1 })
+  })
 })
 
 describe('projectStore undo/redo', () => {

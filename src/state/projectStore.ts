@@ -46,7 +46,7 @@ type ProjectStore = {
   saveCurrentProject: () => Promise<void>
   clearLoadError: () => void
 
-  addEffect: (type: string) => void
+  addEffect: (type: string, paramsOverride?: EffectParams) => void
   removeEffect: (id: string) => void
   duplicateEffect: (id: string) => void
   reorderEffects: (activeId: string, overId: string) => void
@@ -60,6 +60,7 @@ type ProjectStore = {
     options?: { commit?: boolean },
   ) => void
   resetEffectParams: (id: string) => void
+  applyEffectParams: (id: string, params: EffectParams) => void
 
   selectEffect: (id: string | null) => void
   setCamera: (patch: Partial<CameraState>) => void
@@ -222,10 +223,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     }
   },
 
-  addEffect: (type) => {
+  addEffect: (type, paramsOverride) => {
     const { project, history } = get()
     if (!project) return
-    const node = createEffectNode(type)
+    const node = createEffectNode(type, paramsOverride)
     set({
       history: pushHistory(history, project.effects),
       project: touchProject({ ...project, effects: [...project.effects, node] }),
@@ -340,6 +341,18 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         effects: project.effects.map((e) =>
           e.id === id ? { ...e, params: defaultParamsFor(node.type) } : e,
         ),
+      }),
+    })
+  },
+
+  applyEffectParams: (id, params) => {
+    const { project, history } = get()
+    if (!project) return
+    set({
+      history: pushHistory(history, project.effects),
+      project: touchProject({
+        ...project,
+        effects: project.effects.map((e) => (e.id === id ? { ...e, params } : e)),
       }),
     })
   },

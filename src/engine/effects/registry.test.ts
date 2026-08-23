@@ -57,4 +57,9 @@ describe('effect registry', () => {
     expect(a.id).not.toBe(b.id)
     expect(a.seed).not.toBe(b.seed)
   })
+
+  it('uses paramsOverride instead of defaults when provided (e.g. applying a preset)', () => {
+    const node = createEffectNode('exposure', { stops: 2.5 })
+    expect(node.params).toEqual({ stops: 2.5 })
+  })
 })

@@ -42,7 +42,7 @@ export function defaultParamsFor(type: string): EffectParams {
   return params
 }
 
-export function createEffectNode(type: string): EffectNode {
+export function createEffectNode(type: string, paramsOverride?: EffectParams): EffectNode {
   const definition = getEffectDefinition(type)
   return {
     id: crypto.randomUUID(),
@@ -51,7 +51,7 @@ export function createEffectNode(type: string): EffectNode {
     enabled: true,
     opacity: 1,
     blendMode: 'normal',
-    params: defaultParamsFor(type),
+    params: paramsOverride ?? defaultParamsFor(type),
     seed: definition.usesSeed ? Math.floor(Math.random() * 2 ** 31) : undefined,
   }
 }

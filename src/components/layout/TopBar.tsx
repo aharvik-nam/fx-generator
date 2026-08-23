@@ -102,11 +102,7 @@ export function TopBar() {
         </div>
       </div>
 
-      <Tabs
-        value={view}
-        onValueChange={(value) => setView(value as AppView)}
-        className="shrink-0"
-      >
+      <Tabs value={view} onValueChange={(value) => setView(value as AppView)} className="shrink-0">
         <TabsList>
           <TabsTrigger value="editor">Editor</TabsTrigger>
           <TabsTrigger value="showcase-editor">Showcase</TabsTrigger>

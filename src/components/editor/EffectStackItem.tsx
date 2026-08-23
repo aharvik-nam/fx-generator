@@ -9,7 +9,9 @@ import { useProjectStore } from '@/state/projectStore'
 import { getEffectDefinition } from '@/engine/effects/registry'
 import { BLEND_MODE_OPTIONS } from '@/engine/color/blend'
 import { BLEND_MODE_LABELS } from '@/engine/color/blendModeLabels'
+import { ApplyPresetSelect } from './ApplyPresetSelect'
 import { ParamControls } from './params/ParamControls'
+import { SavePresetDialog } from './SavePresetDialog'
 import { SliderParam } from './params/SliderParam'
 import { SelectParam } from './params/SelectParam'
 import type { BlendMode, EffectNode } from '@/types'
@@ -87,6 +89,7 @@ export function EffectStackItem({ effect }: EffectStackItemProps) {
         >
           <RotateCcw className="size-3.5" aria-hidden="true" />
         </Button>
+        <SavePresetDialog effect={effect} />
         <Button
           variant="ghost"
           size="icon"
@@ -138,6 +141,7 @@ export function EffectStackItem({ effect }: EffectStackItemProps) {
             options={BLEND_MODE_SELECT_OPTIONS}
             onChange={(value) => setEffectBlendMode(effect.id, value as BlendMode)}
           />
+          <ApplyPresetSelect effect={effect} />
           <div className="border-border border-t border-dashed" />
           <ParamControls effect={effect} definition={definition} />
         </div>
