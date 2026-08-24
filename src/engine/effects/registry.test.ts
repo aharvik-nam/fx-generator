@@ -14,6 +14,7 @@ describe('effect registry', () => {
       'contrast',
       'duotone',
       'film-grain',
+      'analog-grain',
       'vignette',
       'posterize',
       'rgb-channel-shift',

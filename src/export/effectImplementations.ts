@@ -29,6 +29,18 @@ import { applyExposure } from '../engine/effects/definitions/exposure'
 import { applyContrast } from '../engine/effects/definitions/contrast'
 import { applyDuotone } from '../engine/effects/definitions/duotone'
 import { applyFilmGrain } from '../engine/effects/definitions/filmGrain'
+import {
+  applyAnalogGrain,
+  getGrainLookProfile,
+  tonalGrainWeight,
+} from '../engine/effects/definitions/analogGrain'
+import {
+  boxBlurField,
+  generateWhiteNoiseField,
+  linearToSrgb,
+  shapeGrainClumps,
+  srgbToLinear,
+} from '../engine/effects/canvas2d/grainNoise'
 import { applyVignette } from '../engine/effects/definitions/vignette'
 import { applyPosterize } from '../engine/effects/definitions/posterize'
 import { applyRgbChannelShift, clampIndex } from '../engine/effects/definitions/rgbChannelShift'
@@ -101,6 +113,23 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
     deps: [fn(clamp8), ...HEX_TO_RGB_DEPS, fn(relativeLuminance)],
   },
   'film-grain': { kind: 'pixel', mainFn: applyFilmGrain, deps: [fn(clamp8), fn(mulberry32)] },
+  'analog-grain': {
+    kind: 'pixel',
+    mainFn: applyAnalogGrain,
+    deps: [
+      fn(clamp8),
+      fn(mulberry32),
+      ...LUMINANCE_GRID_DEPS,
+      ...SOBEL_DEPS,
+      fn(boxBlurField),
+      fn(generateWhiteNoiseField),
+      fn(shapeGrainClumps),
+      fn(srgbToLinear),
+      fn(linearToSrgb),
+      fn(getGrainLookProfile),
+      fn(tonalGrainWeight),
+    ],
+  },
   vignette: { kind: 'pixel', mainFn: applyVignette, deps: [fn(clamp01), fn(clamp8)] },
   posterize: { kind: 'pixel', mainFn: applyPosterize, deps: [fn(clamp8)] },
   'rgb-channel-shift': { kind: 'pixel', mainFn: applyRgbChannelShift, deps: [fn(clampIndex)] },

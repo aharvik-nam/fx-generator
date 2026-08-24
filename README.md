@@ -51,9 +51,12 @@ Implementert så langt:
   utvikle seg et gitt antall generasjoner), **Fargekvantisering** (finner bildets egne dominerende
   farger med k-means-klynging, i motsetning til Posterize sine faste nivåer), **Kaleidoskop**
   (speilvendte kiler rundt et senterpunkt), **Kuwahara** (kant-bevarende utjevning — glatter ut
-  flate områder uten å myke opp kantene, i motsetning til vanlig uskarphet) og **Uskarphet /
+  flate områder uten å myke opp kantene, i motsetning til vanlig uskarphet), **Uskarphet /
   skarphet** (én glidebryter fra full Gaussisk uskarphet, via ingen endring, til skarptegning med
-  unsharp mask).
+  unsharp mask) og **Analogt filmkorn** (korrelert, flerlags korn — fint mikrokorn pluss grovere,
+  formede klumper — lagt til som luminans i lineært lys, dempet der bildet allerede har detalj, og
+  formet etter fem filmtyper fra fin S/H til fargenegativ; et mer analogt-tro alternativ til det
+  enklere `Film grain`).
 - Angre/gjøre om med tastatursnarveier.
 - Metadata-panel: viser EXIF/GPS når tilgjengelig, med tydelig varsel for sensitive felt.
 - Eksporter til PNG/JPG/WebP i full oppløsning, med eksplisitt kontroll over om EXIF-metadata

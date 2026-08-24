@@ -3,6 +3,7 @@ import { exposureEffect } from './definitions/exposure'
 import { contrastEffect } from './definitions/contrast'
 import { duotoneEffect } from './definitions/duotone'
 import { filmGrainEffect } from './definitions/filmGrain'
+import { analogGrainEffect } from './definitions/analogGrain'
 import { vignetteEffect } from './definitions/vignette'
 import { posterizeEffect } from './definitions/posterize'
 import { rgbChannelShiftEffect } from './definitions/rgbChannelShift'
@@ -29,6 +30,7 @@ const EFFECT_DEFINITIONS: EffectDefinition[] = [
   contrastEffect,
   duotoneEffect,
   filmGrainEffect,
+  analogGrainEffect,
   vignetteEffect,
   posterizeEffect,
   rgbChannelShiftEffect,
