@@ -6,7 +6,8 @@ alt kjøres i din egen nettleser. Ingen bilder eller metadata forlater maskinen 
 
 > **Status:** MVP-en er komplett og ferdigstilt (M0–M6). Opplasting, en ikke-destruktiv effektkjede
 > med alle 9 Prioritet-1-effekter, metadata-lesing/-visning, full oppløsning-eksport, en
-> redigerbar AI Image Recipe, lokal prosjektlagring (IndexedDB) med ZIP-eksport, og Showcase-modus
+> en Effect Recipe som genererer ekte kjørbar JavaScript for effektkjeden, lokal prosjektlagring
+> (IndexedDB) med ZIP-eksport, og Showcase-modus
 > med **Vertical Story**- og **Before/After Explorer**-visningsmoduser fungerer — verifisert
 > både lokalt og på den live Vercel-deployen. Se [Veikart](#veikart) for hva som er planlagt
 > post-MVP (bygges kun etter egen godkjenning).
@@ -57,17 +58,22 @@ Implementert så langt:
 - Metadata-panel: viser EXIF/GPS når tilgjengelig, med tydelig varsel for sensitive felt.
 - Eksporter til PNG/JPG/WebP i full oppløsning, med eksplisitt kontroll over om EXIF-metadata
   fjernes helt, delvis (sensitive felt fjernet), eller beholdes (kun JPEG).
-- Redigerbar **AI Image Recipe**: strukturerte felt (motiv/komposisjon/lys/stemning/stil) eller
-  direkte Markdown-redigering, automatisk uttrekk av fargepalett og effektkjede, kopier/last ned
-  `.md`, og formatering av prompten for Flux/SDXL/Midjourney/Gemini — med tydelig forbehold om at
-  en AI-prompt ikke garanterer en presis reproduksjon.
-- Lagre og åpne prosjekter lokalt (IndexedDB) — inkludert originalbildet, hele effektkjeden og
-  recipe-feltene.
+- **Effect Recipe:** genererer ekte, kjørbar JavaScript (Canvas 2D) som gjenskaper effektkjeden
+  utenfor appen — ikke en AI-prompt. For hver aktive effekt: en selvstendig kodeblokk (hentet
+  live via `.toString()` fra den faktiske funksjonen appen selv kjører, aldri en frikoblet
+  beskrivelse som kan gli ut av synk) pluss et lite eksempel på hvordan den kalles alene, og til
+  slutt ett samlet, dedupliserte skript som komponerer alle effektene i rekkefølge — med riktig
+  opacity, blend mode og maske mellom hvert steg, akkurat slik `RenderPipeline` gjør det internt.
+  Kopier koden rett inn i en nettside, eller last ned `.js`/`.md`. Verifisert til å faktisk kjøre
+  feilfritt både i dev-serveren og i en ekte `vite preview`-produksjonsbygg (minifisering endrer
+  navnene på delte hjelpefunksjoner — derfor er alle interne konstanter erklært inni funksjonen
+  som bruker dem i stedet for delt på modul-nivå, se `export/effectImplementations.ts`).
+- Lagre og åpne prosjekter lokalt (IndexedDB) — inkludert originalbildet og hele effektkjeden.
 - Eksporter en komplett ZIP-pakke (bilde + `recipe.md` + `project.json`).
 - **Showcase-modus:** bygg en presentasjon av et bildes transformasjon som en sekvens av navngitte,
   uavhengige states (hver med egen effektkjede, kamera og miniatyrbilde). Showcase-editor med
   dra-og-slipp-omrokkering, dupliser/slett, start/slutt-markering, intro/outro-tekst og
-  visningsinnstillinger (metadata/recipe/parametere). Lagres lokalt (IndexedDB), ett showcase per
+  visningsinnstillinger (metadata/parametere). Lagres lokalt (IndexedDB), ett showcase per
   prosjekt. To visningsmoduser: **Vertical Story** (scroll-drevet presentasjon med
   fremdriftsindikator og hopp-til-state-navigasjon) og **Before/After Explorer** (delt
   før/etter-sammenligning av showcasets start- og slutt-state, med en dra-i-bildet-glidebryter
@@ -160,8 +166,11 @@ src/
                   # presetRepository.ts (lagre/hent/slett)
   metadata/      # exifr-basert EXIF/XMP/IPTC/GPS-lesing, strip/keep-sensitiv-policy
   export/        # imageExport (orkestrering + nedlasting), jpegMetadataInject (piexifjs),
-                  # recipeGenerator (Markdown + provider-prompts), zipExport (jszip),
-                  # ExportDialog-UI
+                  # effectImplementations.ts (kobler hver effekt-id til de faktiske
+                  # implementasjonsfunksjonene, for Recipe-kodegenerering), recipeGenerator
+                  # (bygger kjørbar JS-kode + samlet effektkjede-skript fra `.toString()` på
+                  # live funksjonsreferanser — aldri en frikoblet beskrivelse), zipExport
+                  # (jszip), ExportDialog-UI
   showcase/       # thumbnail.ts, formatMetadataExcerpt.ts, interpolateShowcaseState.ts (ren
                   # funksjon for fremtidig scroll-interpolering), scrollModes/verticalStory/,
                   # scrollModes/beforeAfter/
@@ -218,11 +227,11 @@ nettleserverifisering); resten er planlagt.
   en direkte-redigerbar Markdown-visning, kopier/last ned, og prompt-formatering for
   Flux/SDXL/Midjourney/Gemini; lokal prosjektlagring i IndexedDB (originalbilde + effektkjede +
   recipe) med en Prosjekter-dialog for å åpne/slette; ZIP-eksport av bilde + `recipe.md` +
-  `project.json`.
+  `project.json`. (Recipe-funksjonen ble senere fullstendig erstattet — se "Etter MVP".)
 - ✅ **M4 — Showcase del 1:** showcase-datamodell (`ShowcaseProject`/`ShowcaseState`), lokal
   lagring i IndexedDB (ett showcase per prosjekt); showcase-editor med opprett-fra-gjeldende-
   redigering, dra-og-slipp-omrokkering, dupliser/slett, navngiving/beskrivelse/notater,
-  start/slutt-state-markering, intro/outro-tekst og visningsinnstillinger (metadata/recipe/
+  start/slutt-state-markering, intro/outro-tekst og visningsinnstillinger (metadata/
   parametere); automatisk miniatyrbilde-generering per state; **Vertical Story**-visningsmodus
   (`IntersectionObserver`-drevet aktiv-state-sporing, fremdriftsindikator, hopp-til-state-
   navigasjon via sidepanel med prikker).
