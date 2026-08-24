@@ -1,165 +1,249 @@
 import { getEffectDefinition } from '@/engine/effects/registry'
-import type {
-  EffectNode,
-  EffectParams,
-  ImageProject,
-  ParamSchemaEntry,
-  PromptProvider,
-  PromptRecipe,
-} from '@/types'
+import type { EffectNode, ImageProject } from '@/types'
+import {
+  EFFECT_CODE_SPECS,
+  MASK_DEPS,
+  type CodeDependency,
+  type EffectCodeSpec,
+} from './effectImplementations'
 
-const METADATA_POLICY_LABEL: Record<ImageProject['exportSettings']['metadataPolicy'], string> = {
-  'strip-all': 'removed on export',
-  'strip-sensitive': 'sensitive fields removed on export',
-  'keep-all': 'kept on export',
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyFn = (...args: any[]) => unknown
+
+function functionBlock(f: AnyFn): string {
+  return `const ${f.name} = ${f.toString()};`
 }
 
-function formatNumber(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2)
+function depBlock(dep: CodeDependency): string {
+  return functionBlock(dep.fn)
 }
 
-// Param schema `label` fields are localized for the editor UI (e.g. Norwegian "Skygger"), but
-// this document is English throughout — so field names are derived from the (English,
-// camelCase) param key instead of the UI label, which would otherwise leak the UI's language
-// into an AI-prompt-facing document.
-function humanizeParamKey(key: string): string {
-  const spaced = key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').toLowerCase()
-  return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+function depKey(dep: CodeDependency): string {
+  return dep.fn.name
 }
 
-function formatParamValue(
-  value: EffectParams[string],
-  schema: ParamSchemaEntry | undefined,
-): string {
-  if (!schema) return String(value)
-  switch (schema.kind) {
-    case 'boolean':
-      return value ? 'Yes' : 'No'
-    case 'select': {
-      const option = schema.options.find((candidate) => candidate.value === value)
-      return option?.label ?? String(value)
-    }
-    case 'color':
-      return String(value)
-    case 'slider':
-    case 'number':
-      return typeof value === 'number' ? formatNumber(value) : String(value)
+/** A single effect's self-contained code block: every helper it depends on, deduplicated, plus
+ * the effect's own implementation — pulled live via `.toString()` from the exact function the
+ * app runs, never a hand-written re-description of the algorithm. */
+function generateEffectCode(spec: EffectCodeSpec): string {
+  const seen = new Set<string>()
+  const blocks: string[] = []
+  for (const dep of spec.deps) {
+    const key = depKey(dep)
+    if (seen.has(key)) continue
+    seen.add(key)
+    blocks.push(depBlock(dep))
   }
+  blocks.push(functionBlock(spec.mainFn))
+  return blocks.join('\n\n')
 }
 
-function formatEffectEntry(effect: EffectNode, index: number): string {
+function usageSnippet(effect: EffectNode, spec: EffectCodeSpec): string {
+  const paramsJson = JSON.stringify(effect.params)
+  const seed = effect.seed ?? 0
+  const fnName = spec.mainFn.name
+  if (spec.kind === 'pixel') {
+    return [
+      'const imageData = ctx.getImageData(0, 0, width, height)',
+      `${fnName}(imageData.data, width, height, ${paramsJson}, ${seed})`,
+      'ctx.putImageData(imageData, 0, 0)',
+    ].join('\n')
+  }
+  return `${fnName}(ctx, width, height, ${paramsJson}, ${seed})`
+}
+
+function formatChainOverview(effects: EffectNode[]): string {
+  return effects
+    .map((effect, i) => {
+      const details = [`opacity ${Math.round(effect.opacity * 100)}%`]
+      if (effect.blendMode !== 'normal') details.push(`blend mode: ${effect.blendMode}`)
+      if (effect.seed !== undefined) details.push(`seed: ${effect.seed}`)
+      if (effect.mask && effect.mask.kind !== 'none') details.push(`maske: ${effect.mask.kind}`)
+      return `${i + 1}. ${getEffectDefinition(effect.type).name} — ${details.join(', ')}`
+    })
+    .join('\n')
+}
+
+function formatEffectSection(effect: EffectNode, index: number): string {
   const definition = getEffectDefinition(effect.type)
-  const lines = [`${index + 1}. ${effect.name}${effect.enabled ? '' : ' (disabled)'}`]
-
-  for (const [key, value] of Object.entries(effect.params)) {
-    const schema = definition.paramSchema[key]
-    lines.push(`   - ${humanizeParamKey(key)}: ${formatParamValue(value, schema)}`)
-  }
-  lines.push(`   - Opacity: ${Math.round(effect.opacity * 100)}%`)
-  if (effect.blendMode !== 'normal') lines.push(`   - Blend mode: ${effect.blendMode}`)
-  if (effect.seed !== undefined) lines.push(`   - Seed: ${effect.seed}`)
-
+  const spec = EFFECT_CODE_SPECS[effect.type]
+  const lines = [
+    `## ${index + 1}. ${definition.name}`,
+    '',
+    definition.description,
+    '',
+    '```js',
+    generateEffectCode(spec),
+    '```',
+    '',
+    '**Bruk alene** (på et 2D canvas-kontekst `ctx` med bildet allerede tegnet inn, `width`/`height` = canvasets mål):',
+    '```js',
+    usageSnippet(effect, spec),
+    '```',
+  ]
   return lines.join('\n')
 }
 
-function formatEffectPipeline(effects: EffectNode[]): string {
-  if (effects.length === 0) return '_No effects applied._'
-  return effects.map(formatEffectEntry).join('\n\n')
+/**
+ * The full, deduplicated pipeline script: every helper and main function each enabled effect
+ * needs (included once, even if several effects share one), plus an `applyEffectChain(sourceCanvas)`
+ * orchestrator that composites them in order — cloning the running canvas per step, applying the
+ * effect, optionally clipping its alpha by a mask, then compositing it back with the effect's own
+ * opacity/blend mode via `globalAlpha`/`globalCompositeOperation`. This mirrors exactly what
+ * `RenderPipeline.compute()` does internally (see engine/pipeline/renderPipeline.ts), just
+ * expressed as plain, dependency-free JavaScript instead of OffscreenCanvas-based TypeScript.
+ */
+export function generateFullPipelineScript(effects: EffectNode[]): string {
+  const seen = new Set<string>()
+  const blocks: string[] = []
+
+  function include(dep: CodeDependency): void {
+    const key = depKey(dep)
+    if (seen.has(key)) return
+    seen.add(key)
+    blocks.push(depBlock(dep))
+  }
+
+  function includeMainFn(mainFn: AnyFn): void {
+    if (seen.has(mainFn.name)) return
+    seen.add(mainFn.name)
+    blocks.push(functionBlock(mainFn))
+  }
+
+  const needsMask = effects.some((effect) => effect.mask && effect.mask.kind !== 'none')
+  if (needsMask) for (const dep of MASK_DEPS) include(dep)
+
+  const stepLines = effects.map((effect) => {
+    const spec = EFFECT_CODE_SPECS[effect.type]
+    for (const dep of spec.deps) include(dep)
+    includeMainFn(spec.mainFn)
+
+    const paramsJson = JSON.stringify(effect.params)
+    const seed = effect.seed ?? 0
+    const runExpr =
+      spec.kind === 'pixel'
+        ? `(ctx, width, height) => { const imageData = ctx.getImageData(0, 0, width, height); ${spec.mainFn.name}(imageData.data, width, height, ${paramsJson}, ${seed}); ctx.putImageData(imageData, 0, 0) }`
+        : `(ctx, width, height) => { ${spec.mainFn.name}(ctx, width, height, ${paramsJson}, ${seed}) }`
+    // Canvas 2D's globalCompositeOperation values match every BlendMode name exactly except
+    // 'normal' -> 'source-over' (see engine/color/blend.ts) — no mapping table needed here.
+    const compositeOp = effect.blendMode === 'normal' ? 'source-over' : effect.blendMode
+    const maskJson =
+      effect.mask && effect.mask.kind !== 'none' ? JSON.stringify(effect.mask) : 'null'
+
+    return `  { run: ${runExpr}, opacity: ${effect.opacity}, blendMode: ${JSON.stringify(compositeOp)}, mask: ${maskJson} },`
+  })
+
+  const orchestrator = `function applyEffectChain(sourceCanvas) {
+  const width = sourceCanvas.width
+  const height = sourceCanvas.height
+  const steps = [
+${stepLines.join('\n')}
+  ]
+
+  let base = document.createElement('canvas')
+  base.width = width
+  base.height = height
+  base.getContext('2d').drawImage(sourceCanvas, 0, 0)
+
+  for (const step of steps) {
+    const layer = document.createElement('canvas')
+    layer.width = width
+    layer.height = height
+    const layerCtx = layer.getContext('2d')
+    layerCtx.drawImage(base, 0, 0)
+    step.run(layerCtx, width, height)
+
+    if (step.mask) {
+      const baseCtx = base.getContext('2d')
+      const layerData = layerCtx.getImageData(0, 0, width, height)
+      const baseData =
+        step.mask.kind === 'luminosity' ? baseCtx.getImageData(0, 0, width, height).data : null
+      for (let y = 0; y < height; y++) {
+        const ny = (y + 0.5) / height
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4
+          const nx = (x + 0.5) / width
+          const baseColor = baseData
+            ? { r: baseData[i], g: baseData[i + 1], b: baseData[i + 2] }
+            : undefined
+          const value = maskValueAt(nx, ny, step.mask, baseColor)
+          layerData.data[i + 3] = Math.round(layerData.data[i + 3] * value)
+        }
+      }
+      layerCtx.putImageData(layerData, 0, 0)
+    }
+
+    const next = document.createElement('canvas')
+    next.width = width
+    next.height = height
+    const nextCtx = next.getContext('2d')
+    nextCtx.drawImage(base, 0, 0)
+    nextCtx.globalAlpha = step.opacity
+    nextCtx.globalCompositeOperation = step.blendMode
+    nextCtx.drawImage(layer, 0, 0)
+    base = next
+  }
+
+  return base
+}`
+
+  return [...blocks, orchestrator].join('\n\n')
 }
 
-function orDefault(value: string, fallback: string): string {
-  const trimmed = value.trim()
-  return trimmed.length > 0 ? trimmed : fallback
+export const USAGE_EXAMPLE = `const img = new Image()
+img.onload = () => {
+  const source = document.createElement('canvas')
+  source.width = img.width
+  source.height = img.height
+  source.getContext('2d').drawImage(img, 0, 0)
+
+  const result = applyEffectChain(source)
+  document.body.appendChild(result) // or draw \`result\` onto your own visible <canvas>
 }
+img.src = 'your-image.jpg'`
 
 /**
- * Builds the AI Image Recipe markdown from a project's technical data (source, metadata,
- * effect pipeline — auto-filled) and its user-authored fields (subject, composition, lighting,
- * mood, style, prompts — never invented on the user's behalf). English throughout: this
- * document is meant to be pasted into Flux/SDXL/Midjourney/Gemini, which work far better with
- * English prompts, even though the rest of the app UI is Norwegian.
+ * Builds the Effect Recipe markdown: a per-effect breakdown (each with its own self-contained,
+ * copy-pasteable code block) followed by the full deduplicated pipeline script. Every code block
+ * is real, running JavaScript sourced live from the app's own implementation — there is nothing
+ * here for the user to author, and nothing invented on their behalf.
  */
-export function generateRecipeMarkdown(project: ImageProject, palette: string[]): string {
-  const { originalMetadata, recipe, effects, exportSettings } = project
-  const lines: string[] = ['# Image Recipe', '', '## Source']
+export function generateRecipeMarkdown(project: ImageProject): string {
+  const enabled = project.effects.filter((effect) => effect.enabled)
+  const lines = [
+    '# Effect Recipe',
+    '',
+    'Ekte, kjørbar JavaScript (Canvas 2D) som gjenskaper effektkjeden under — nøyaktig de samme ' +
+      'algoritmene og parameterverdiene appen selv bruker akkurat nå. Ingen KI involvert; dette er ' +
+      'kildekode, ikke en generert prompt.',
+  ]
 
-  lines.push(`- Original: \`${originalMetadata.fileName}\``)
-  lines.push(
-    `- Dimensions: ${originalMetadata.dimensions.width} × ${originalMetadata.dimensions.height} px`,
-  )
-  lines.push(`- Orientation: ${originalMetadata.orientation}`)
-  const cameraLabel = [originalMetadata.camera?.make, originalMetadata.camera?.model]
-    .filter(Boolean)
-    .join(' ')
-  if (cameraLabel) lines.push(`- Camera: ${cameraLabel}`)
-  if (originalMetadata.lens?.model) lines.push(`- Lens: ${originalMetadata.lens.model}`)
-  if (originalMetadata.captureDate)
-    lines.push(`- Date: ${originalMetadata.captureDate.slice(0, 10)}`)
-  lines.push(`- Metadata policy: ${METADATA_POLICY_LABEL[exportSettings.metadataPolicy]}`)
+  if (enabled.length === 0) {
+    lines.push('', '_Ingen aktive effekter — legg til en effekt for å generere kode._')
+    return lines.join('\n')
+  }
 
-  lines.push('', '## Visual description')
-  lines.push(`- Subject: ${orDefault(recipe.subject, '_not specified_')}`)
-  lines.push(`- Composition: ${orDefault(recipe.composition, '_not specified_')}`)
-  lines.push(`- Lighting: ${orDefault(recipe.lighting, '_not specified_')}`)
-  lines.push(`- Mood: ${orDefault(recipe.mood, '_not specified_')}`)
-  lines.push(`- Colour palette: ${palette.length > 0 ? palette.join(', ') : '_not available_'}`)
-  lines.push(`- Style: ${orDefault(recipe.styleNotes, '_not specified_')}`)
+  lines.push('', '## Effektkjede', formatChainOverview(enabled))
 
-  lines.push('', '## Effect pipeline', formatEffectPipeline(effects))
+  enabled.forEach((effect, i) => {
+    lines.push('', formatEffectSection(effect, i))
+  })
 
-  lines.push('', '## AI prompt', orDefault(recipe.aiPrompt, '_not specified_'))
-  lines.push('', '## Negative prompt', orDefault(recipe.negativePrompt, '_not specified_'))
   lines.push(
     '',
-    '## Reproduction notes',
-    orDefault(
-      recipe.reproductionNotes,
-      'An AI prompt describes the visual expression but does not guarantee a precise reproduction of the original image.',
-    ),
+    '## Hele effektkjeden samlet',
+    'Kjører alle effektene i rekkefølge med riktig opacity, blend mode og maske mellom hvert ' +
+      'steg — akkurat slik appen selv setter dem sammen internt (se `RenderPipeline`).',
+    '',
+    '```js',
+    generateFullPipelineScript(enabled),
+    '```',
+    '',
+    '**Eksempel på bruk:**',
+    '```js',
+    USAGE_EXAMPLE,
+    '```',
   )
 
   return lines.join('\n')
-}
-
-/**
- * Adapts the base AI/negative prompt to each provider's actual prompt syntax. Flux has no
- * native negative-prompt concept, SDXL UIs conventionally show it as a separate labelled field,
- * Midjourney takes it as a `--no` parameter, and Gemini/Imagen work best as one natural-language
- * sentence rather than a keyword list.
- */
-export function formatPromptForProvider(recipe: PromptRecipe, provider: PromptProvider): string {
-  const prompt = recipe.aiPrompt.trim()
-  const negative = recipe.negativePrompt.trim()
-
-  switch (provider) {
-    case 'flux':
-      return prompt
-    case 'sdxl':
-      return negative ? `${prompt}\nNegative prompt: ${negative}` : prompt
-    case 'midjourney':
-      return negative ? `${prompt} --no ${negative}` : prompt
-    case 'gemini':
-      return negative ? `${prompt} Avoid: ${negative}.` : prompt
-  }
-}
-
-/**
- * A starting-point draft for the AI prompt field, built purely from the user's own
- * subject/composition/lighting/mood/style text and the names of enabled effects — never
- * invented content, and no AI/network call involved. The user is expected to edit it.
- */
-export function suggestPromptDraft(recipe: PromptRecipe, effects: EffectNode[]): string {
-  const effectNames = effects
-    .filter((effect) => effect.enabled)
-    .map((effect) => effect.name.toLowerCase())
-  const parts = [
-    recipe.subject.trim(),
-    recipe.composition.trim() && `${recipe.composition.trim()} composition`,
-    recipe.lighting.trim() && `${recipe.lighting.trim()} lighting`,
-    recipe.mood.trim() && `${recipe.mood.trim()} mood`,
-    recipe.styleNotes.trim(),
-    effectNames.length > 0 && `${effectNames.join(', ')} style treatment`,
-  ].filter((part): part is string => Boolean(part))
-
-  return parts.join(', ')
 }
