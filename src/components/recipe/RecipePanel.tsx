@@ -41,19 +41,19 @@ export function RecipePanel() {
   const markdown = generateRecipeMarkdown(project)
 
   return (
-    <div className="flex flex-col gap-3 p-3">
+    <div className="flex min-w-0 flex-col gap-3 p-3">
       <p className="border-border bg-muted/40 text-muted-foreground rounded-md border p-2.5 text-xs">
         Ekte, kjørbar JavaScript (Canvas 2D) hentet direkte fra appens egen kode — samme algoritmer
         og parameterverdier som effektkjeden din bruker akkurat nå. Ingen KI involvert. Lim rett inn
         i en nettside.
       </p>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex min-w-0 flex-col gap-1.5">
         <span className="text-muted-foreground text-xs font-normal">
           Hele effektkjeden ({enabledEffects.length} effekt
           {enabledEffects.length === 1 ? '' : 'er'})
         </span>
-        <pre className="border-border bg-muted/30 max-h-64 overflow-auto rounded-md border p-2.5 font-mono text-xs">
+        <pre className="border-border bg-muted/30 max-h-64 min-w-0 overflow-auto rounded-md border p-2.5 font-mono text-xs break-all whitespace-pre-wrap">
           <code>{fullScript}</code>
         </pre>
         <div className="flex gap-2">

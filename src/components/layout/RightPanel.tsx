@@ -12,14 +12,14 @@ export function RightPanelContent() {
         <TabsTrigger value="metadata">Metadata</TabsTrigger>
         <TabsTrigger value="recipe">Recipe</TabsTrigger>
       </TabsList>
-      <ScrollArea className="flex-1">
-        <TabsContent value="stack" className="mt-0">
+      <ScrollArea className="min-w-0 flex-1">
+        <TabsContent value="stack" className="mt-0 min-w-0">
           <EffectStack />
         </TabsContent>
-        <TabsContent value="metadata" className="mt-0">
+        <TabsContent value="metadata" className="mt-0 min-w-0">
           <MetadataPanel />
         </TabsContent>
-        <TabsContent value="recipe" className="mt-0">
+        <TabsContent value="recipe" className="mt-0 min-w-0">
           <RecipePanel />
         </TabsContent>
       </ScrollArea>
