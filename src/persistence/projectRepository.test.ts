@@ -27,16 +27,6 @@ function fakeProject(overrides: Partial<ImageProject> = {}): ImageProject {
     },
     effects: [],
     camera: { zoom: 1, panX: 0, panY: 0 },
-    recipe: {
-      subject: '',
-      composition: '',
-      lighting: '',
-      mood: '',
-      styleNotes: '',
-      aiPrompt: '',
-      negativePrompt: '',
-      reproductionNotes: '',
-    },
     exportSettings: {
       format: 'png',
       quality: 0.92,

@@ -9,7 +9,6 @@ import type {
   ImageProject,
   MaskReference,
   OriginalImageMetadata,
-  PromptRecipe,
 } from '@/types'
 import { createEffectNode, defaultParamsFor } from '@/engine/effects/registry'
 import { createPreviewBitmap, decodeImageFile } from '@/engine/image/imageLoading'
@@ -68,7 +67,6 @@ type ProjectStore = {
   setCamera: (patch: Partial<CameraState>) => void
   toggleBeforeAfter: () => void
   updateExportSettings: (patch: Partial<ExportSettings>) => void
-  updateRecipeField: (patch: Partial<PromptRecipe>) => void
 
   undo: () => void
   redo: () => void
@@ -98,16 +96,6 @@ function createEmptyProject(file: File, metadata: OriginalImageMetadata): ImageP
     originalMetadata: metadata,
     effects: [],
     camera: { zoom: 1, panX: 0, panY: 0 },
-    recipe: {
-      subject: '',
-      composition: '',
-      lighting: '',
-      mood: '',
-      styleNotes: '',
-      aiPrompt: '',
-      negativePrompt: '',
-      reproductionNotes: '',
-    },
     exportSettings: {
       format: 'png',
       quality: 0.92,
@@ -386,12 +374,6 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const { project } = get()
     if (!project) return
     set({ project: { ...project, exportSettings: { ...project.exportSettings, ...patch } } })
-  },
-
-  updateRecipeField: (patch) => {
-    const { project } = get()
-    if (!project) return
-    set({ project: { ...project, recipe: { ...project.recipe, ...patch } } })
   },
 
   undo: () => {
