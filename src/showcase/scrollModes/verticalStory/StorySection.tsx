@@ -31,7 +31,6 @@ export function StorySection({
   const metadataExcerpt = displaySettings.showMetadata
     ? formatMetadataExcerpt(project.originalMetadata)
     : null
-  const recipeExcerpt = displaySettings.showRecipe ? project.recipe.aiPrompt.trim() : ''
 
   return (
     <section
@@ -59,12 +58,6 @@ export function StorySection({
         )}
 
         {metadataExcerpt && <p className="text-muted-foreground text-xs">{metadataExcerpt}</p>}
-
-        {recipeExcerpt && (
-          <p className="bg-muted/50 text-muted-foreground max-w-md rounded-md p-2 font-mono text-xs italic">
-            “{recipeExcerpt}”
-          </p>
-        )}
 
         {state.notes && <p className="text-muted-foreground text-xs italic">{state.notes}</p>}
       </div>

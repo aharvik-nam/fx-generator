@@ -199,11 +199,6 @@ export function ShowcaseEditorView() {
                 checked={showcase.displaySettings.showMetadata}
                 onChange={(checked) => updateDisplaySettings({ showMetadata: checked })}
               />
-              <DisplayToggle
-                label="AI Image Recipe"
-                checked={showcase.displaySettings.showRecipe}
-                onChange={(checked) => updateDisplaySettings({ showRecipe: checked })}
-              />
             </div>
           </section>
 

@@ -46,7 +46,7 @@ function createEmptyShowcase(projectId: string, projectName: string): ShowcasePr
     endStateId: '',
     scrollMode: 'vertical-story',
     texts: {},
-    displaySettings: { showMetadata: false, showRecipe: false, showParams: true },
+    displaySettings: { showMetadata: false, showParams: true },
     exportSettings: {
       format: 'png',
       quality: 0.92,

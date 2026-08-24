@@ -107,7 +107,6 @@ export function BeforeAfterExplorer({ showcase, project, sourceBitmap }: BeforeA
   const metadataExcerpt = showcase.displaySettings.showMetadata
     ? formatMetadataExcerpt(project.originalMetadata)
     : null
-  const recipeExcerpt = showcase.displaySettings.showRecipe ? project.recipe.aiPrompt.trim() : ''
   const afterEffects = afterState.effectNodes.filter((effect) => effect.enabled)
 
   const clipPath =
@@ -214,11 +213,6 @@ export function BeforeAfterExplorer({ showcase, project, sourceBitmap }: BeforeA
           </ul>
         )}
         {metadataExcerpt && <p className="text-muted-foreground text-xs">{metadataExcerpt}</p>}
-        {recipeExcerpt && (
-          <p className="bg-muted/50 text-muted-foreground max-w-md rounded-md p-2 font-mono text-xs italic">
-            “{recipeExcerpt}”
-          </p>
-        )}
       </div>
 
       {showcase.texts.outro && (

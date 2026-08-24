@@ -46,7 +46,6 @@ export const IMPLEMENTED_SCROLL_MODES = [
 
 export type ShowcaseDisplaySettings = {
   showMetadata: boolean
-  showRecipe: boolean
   showParams: boolean
 }
 
