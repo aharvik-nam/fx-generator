@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { applyPrintSurface, applyPrintToneCurve, getSurfaceCharacter } from './printSurface'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
+
+/** paperTextureScale is scaled by canvas resolution (see resolutionScale.ts) — this converts a
+ * desired *effective* pixel scale back into the raw param value that produces it at this test
+ * canvas's (tiny, non-reference) size. */
+function rawFor(effectivePx: number, width: number, height: number): number {
+  return effectivePx / resolutionScaleFactor(width, height)
+}
 
 function makeFlatImage(width: number, height: number, value: number): Uint8ClampedArray {
   const data = new Uint8ClampedArray(width * height * 4)
@@ -157,12 +165,17 @@ describe('applyPrintSurface', () => {
   })
 
   it('produces visibly different textures across the three profiles for the same seed', () => {
+    // A larger effective texture scale than the other tests use, so matte's and gloss's very
+    // different mottleRadiusMultiplier still round to distinguishable integer radii once scaled
+    // down for this tiny test canvas.
+    const rawScale = rawFor(20, 24, 24)
+
     const matte = makeFlatImage(24, 24, 128)
     applyPrintSurface(
       matte,
       24,
       24,
-      { surfaceAmount: 1, profile: 'matte', paperTextureScale: 8 },
+      { surfaceAmount: 1, profile: 'matte', paperTextureScale: rawScale },
       5,
     )
 
@@ -171,7 +184,7 @@ describe('applyPrintSurface', () => {
       gloss,
       24,
       24,
-      { surfaceAmount: 1, profile: 'gloss', paperTextureScale: 8 },
+      { surfaceAmount: 1, profile: 'gloss', paperTextureScale: rawScale },
       5,
     )
 

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { applyBlurSharpen, gaussianBlur, gaussianKernel1D } from './blurSharpen'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
+
+/** applyBlurSharpen's `radius` param is scaled by canvas resolution (see resolutionScale.ts) —
+ * this converts a desired *effective* sigma back into the raw param value that produces it at a
+ * given (tiny, non-reference) test canvas size. */
+function rawRadiusFor(effectiveSigma: number, width: number, height: number): number {
+  return effectiveSigma / resolutionScaleFactor(width, height)
+}
 
 function makeImage(
   width: number,
@@ -83,7 +91,7 @@ describe('applyBlurSharpen', () => {
     const height = 8
     const data = makeImage(width, height, (x) => (x < 4 ? 40 : 200))
     const reference = gaussianBlur(data, width, height, 2)
-    applyBlurSharpen(data, width, height, { radius: 2, amount: -1 }, 0)
+    applyBlurSharpen(data, width, height, { radius: rawRadiusFor(2, width, height), amount: -1 }, 0)
     for (let p = 0; p < width * height; p++) {
       expect(Math.abs(data[p * 4] - reference[p * 3])).toBeLessThanOrEqual(1)
     }
@@ -93,7 +101,7 @@ describe('applyBlurSharpen', () => {
     const width = 12
     const height = 4
     const data = makeImage(width, height, (x) => (x < 6 ? 80 : 180))
-    applyBlurSharpen(data, width, height, { radius: 2, amount: 1 }, 0)
+    applyBlurSharpen(data, width, height, { radius: rawRadiusFor(2, width, height), amount: 1 }, 0)
     // Just left of the edge should overshoot darker than the original 80; just right should
     // overshoot brighter than the original 180 — a plain blur could never do either.
     expect(data[(2 * width + 5) * 4]).toBeLessThan(80)

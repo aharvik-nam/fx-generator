@@ -9,6 +9,7 @@ import {
 } from '../canvas2d/grainNoise'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
 import { mulberry32 } from '../../random/seededRandom'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export type SurfaceProfile = 'matte' | 'satin' | 'gloss'
 
@@ -89,12 +90,16 @@ export const applyPrintSurface: PixelTransform = (data, width, height, params, s
   const profile = typeof params.profile === 'string' ? params.profile : 'satin'
   const character = getSurfaceCharacter(profile)
 
+  const scale = resolutionScaleFactor(width, height)
   const luminance = computeLuminanceGrid(data, width, height)
-  const microcontrastRadius = 10
+  const microcontrastRadius = Math.max(1, Math.round(10 * scale))
   const blurredLuminance = boxBlurField(luminance, width, height, microcontrastRadius)
 
   const random = mulberry32(seed)
-  const mottleRadius = Math.max(1, Math.round(paperTextureScale * character.mottleRadiusMultiplier))
+  const mottleRadius = Math.max(
+    1,
+    Math.round(paperTextureScale * character.mottleRadiusMultiplier * scale),
+  )
   const mottle = boxBlurField(
     generateWhiteNoiseField(width, height, random),
     width,

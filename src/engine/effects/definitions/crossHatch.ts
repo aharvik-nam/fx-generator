@@ -1,5 +1,6 @@
 import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export type HatchLine = { x1: number; y1: number; x2: number; y2: number }
 
@@ -44,10 +45,9 @@ export function renderCrossHatch(
   height: number,
   params: EffectParams,
 ): void {
-  const cellSize = Math.max(
-    3,
-    Math.round(typeof params.cellSize === 'number' ? params.cellSize : 8),
-  )
+  const scale = resolutionScaleFactor(width, height)
+  const rawCellSize = typeof params.cellSize === 'number' ? params.cellSize : 8
+  const cellSize = Math.max(3, Math.round(rawCellSize * scale))
   const lineColor = typeof params.lineColor === 'string' ? params.lineColor : '#000000'
   const background = typeof params.background === 'string' ? params.background : '#ffffff'
 
@@ -59,7 +59,7 @@ export function renderCrossHatch(
   ctx.fillRect(0, 0, width, height)
 
   ctx.strokeStyle = lineColor
-  ctx.lineWidth = 1
+  ctx.lineWidth = Math.max(1, scale)
   ctx.beginPath()
   for (const line of lines) {
     ctx.moveTo(line.x1, line.y1)

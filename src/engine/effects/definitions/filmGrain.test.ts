@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { applyFilmGrain } from './filmGrain'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 function makeFlatImage(width: number, height: number, value: number): Uint8ClampedArray {
   const data = new Uint8ClampedArray(width * height * 4)
@@ -38,7 +39,8 @@ describe('applyFilmGrain', () => {
 
   it('applies the same noise value across an entire block when size > 1', () => {
     const data = makeFlatImage(4, 4, 128)
-    applyFilmGrain(data, 4, 4, { amount: 0.5, size: 2 }, 7)
+    const rawSize = 2 / resolutionScaleFactor(4, 4)
+    applyFilmGrain(data, 4, 4, { amount: 0.5, size: rawSize }, 7)
     // top-left 2x2 block should be uniform
     const topLeft = data[0]
     const topRight = data[4]

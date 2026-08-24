@@ -10,6 +10,7 @@ import {
 } from '../canvas2d/grainNoise'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
 import { mulberry32 } from '../../random/seededRandom'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export type GrainProfile = 'fine' | 'balanced' | 'coarse'
 
@@ -88,10 +89,22 @@ export const applyAnalogGrain: PixelTransform = (data, width, height, params, se
   const luminance = computeLuminanceGrid(data, width, height)
   const random = mulberry32(seed)
 
+  // particleSize (and every derived radius below) is scaled by canvas resolution so the same
+  // param value produces the same *visual* grain regardless of the image's actual size — see
+  // resolutionScale.ts. The caps are generous (not the small ~1600px-tuned ones this used before
+  // scaling existed) since a box blur's cost is independent of its radius, so a large scaled-up
+  // radius on a big export isn't a performance concern the way it would be for a naive blur.
+  const scaledParticleSize = particleSize * resolutionScaleFactor(width, height)
   const softnessScale = 0.5 + softness * 1.5
-  const fineRadius = Math.min(3, Math.round(particleSize * 0.3 * softnessScale))
-  const mediumRadius = Math.min(8, Math.max(1, Math.round(particleSize * 0.8 * softnessScale)))
-  const coarseRadius = Math.min(14, Math.max(1, Math.round(particleSize * 1.8 * softnessScale)))
+  const fineRadius = Math.min(40, Math.round(scaledParticleSize * 0.3 * softnessScale))
+  const mediumRadius = Math.min(
+    120,
+    Math.max(1, Math.round(scaledParticleSize * 0.8 * softnessScale)),
+  )
+  const coarseRadius = Math.min(
+    250,
+    Math.max(1, Math.round(scaledParticleSize * 1.8 * softnessScale)),
+  )
 
   const fineNoise = boxBlurField(
     generateWhiteNoiseField(width, height, random),
@@ -117,7 +130,7 @@ export const applyAnalogGrain: PixelTransform = (data, width, height, params, se
   const clumpExponent = 1 - clumping * 0.5
 
   const hasColorVariance = colorBalance > 0
-  const colorRadius = Math.min(24, coarseRadius * 2)
+  const colorRadius = Math.min(400, coarseRadius * 2)
   const colorNoiseR = hasColorVariance
     ? boxBlurField(generateWhiteNoiseField(width, height, random), width, height, colorRadius)
     : null

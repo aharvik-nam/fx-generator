@@ -2,6 +2,7 @@ import type { EffectDefinition } from '@/types'
 import { clamp8, type Rgb } from '../canvas2d/colorMath'
 import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 type QuadrantStats = Rgb & { variance: number }
 
@@ -78,7 +79,8 @@ export function kuwaharaPixel(
 }
 
 export const applyKuwahara: PixelTransform = (data, width, height, params) => {
-  const radius = Math.max(1, Math.round(typeof params.radius === 'number' ? params.radius : 3))
+  const rawRadius = typeof params.radius === 'number' ? params.radius : 3
+  const radius = Math.max(1, Math.round(rawRadius * resolutionScaleFactor(width, height)))
   const original = Uint8ClampedArray.from(data)
   const luminance = computeLuminanceGrid(original, width, height)
 

@@ -2,6 +2,7 @@ import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { colorAt, rgbToHex } from '../canvas2d/colorMath'
 import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
 import { mulberry32 } from '../../random/seededRandom'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export type Particle = { x: number; y: number; radius: number }
 
@@ -55,7 +56,8 @@ export function renderParticles(
     10,
     Math.round(typeof params.particleCount === 'number' ? params.particleCount : 1500),
   )
-  const particleSize = typeof params.particleSize === 'number' ? params.particleSize : 1.5
+  const rawParticleSize = typeof params.particleSize === 'number' ? params.particleSize : 1.5
+  const particleSize = rawParticleSize * resolutionScaleFactor(width, height)
   const background = typeof params.background === 'string' ? params.background : '#000000'
 
   const source = ctx.getImageData(0, 0, width, height)

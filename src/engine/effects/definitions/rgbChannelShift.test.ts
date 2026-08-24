@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { applyRgbChannelShift } from './rgbChannelShift'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
+
+/** amount is scaled by canvas resolution (see resolutionScale.ts) — this converts a desired
+ * *effective* pixel shift back into the raw param value that produces it at this test canvas's
+ * (tiny, non-reference) size. */
+function rawFor(effectivePx: number, width: number, height: number): number {
+  return effectivePx / resolutionScaleFactor(width, height)
+}
 
 function makeGradient(width: number, height: number): Uint8ClampedArray {
   const data = new Uint8ClampedArray(width * height * 4)
@@ -25,7 +33,7 @@ describe('applyRgbChannelShift', () => {
 
   it('leaves the green channel untouched', () => {
     const data = makeGradient(10, 1)
-    applyRgbChannelShift(data, 10, 1, { amount: 3, angle: 0 }, 0)
+    applyRgbChannelShift(data, 10, 1, { amount: rawFor(3, 10, 1), angle: 0 }, 0)
     for (let x = 0; x < 10; x++) {
       expect(data[x * 4 + 1]).toBe(100)
     }
@@ -33,7 +41,7 @@ describe('applyRgbChannelShift', () => {
 
   it('shifts red and blue channels in opposite directions horizontally', () => {
     const data = makeGradient(10, 1)
-    applyRgbChannelShift(data, 10, 1, { amount: 3, angle: 0 }, 0)
+    applyRgbChannelShift(data, 10, 1, { amount: rawFor(3, 10, 1), angle: 0 }, 0)
     // At x=5: red should read from source x=5-3=2 (value 20), blue from source x=5+3=8 (value 80)
     const i = 5 * 4
     expect(data[i]).toBe(20)
@@ -42,7 +50,7 @@ describe('applyRgbChannelShift', () => {
 
   it('clamps sampling to the edge instead of wrapping', () => {
     const data = makeGradient(10, 1)
-    applyRgbChannelShift(data, 10, 1, { amount: 20, angle: 0 }, 0)
+    applyRgbChannelShift(data, 10, 1, { amount: rawFor(20, 10, 1), angle: 0 }, 0)
     // Every sample position is out of bounds, so red clamps to x=0 and blue clamps to x=9.
     expect(data[0]).toBe(0)
     expect(data[9 * 4 + 2]).toBe(90)

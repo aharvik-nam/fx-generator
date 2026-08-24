@@ -10,7 +10,9 @@
 // and a hardcoded name has no way to track that. This is why every small fixed value an effect
 // needs (Bayer matrices, Sobel kernels, iteration counts, thresholds) is declared *inside* the
 // function that uses it rather than shared at module scope — see sobelGradientAt, hexToRgb,
-// applyOrderedDithering, computeBrushStrokes, computeParticlePositions, applyColorQuantize.
+// applyOrderedDithering, computeBrushStrokes, computeParticlePositions, applyColorQuantize,
+// resolutionScaleFactor (which inlines its 1600 reference dimension for the same reason, even
+// though the same number is also exported separately as RESOLUTION_SCALE_REFERENCE for tests).
 import {
   averageColor,
   clamp01,
@@ -23,6 +25,7 @@ import {
 } from '../engine/effects/canvas2d/colorMath'
 import { computeLuminanceGrid, sobelGradientAt } from '../engine/effects/canvas2d/sobelGradient'
 import { flowAngleAt } from '../engine/effects/canvas2d/flowField'
+import { resolutionScaleFactor } from '../engine/effects/canvas2d/resolutionScale'
 import { mulberry32 } from '../engine/random/seededRandom'
 import { linearGradientValue, maskValueAt, radialGradientValue } from '../engine/mask/maskMath'
 
@@ -102,6 +105,9 @@ function fn(f: AnyFn): CodeDependency {
 const HEX_TO_RGB_DEPS: CodeDependency[] = [fn(hexToRgb)]
 const SOBEL_DEPS: CodeDependency[] = [fn(sobelGradientAt)]
 const LUMINANCE_GRID_DEPS: CodeDependency[] = [fn(relativeLuminance), fn(computeLuminanceGrid)]
+/** Every effect with a pixel-sized parameter (radius, block size, spacing, brush length, ...)
+ * depends on this to stay resolution-independent — see resolutionScale.ts. */
+const RESOLUTION_SCALE_DEPS: CodeDependency[] = [fn(resolutionScaleFactor)]
 
 export type EffectCodeSpec = {
   /** 'pixel' effects call `mainFn(data, width, height, params, seed)` against ImageData.
@@ -119,7 +125,11 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
     mainFn: applyDuotone,
     deps: [fn(clamp8), ...HEX_TO_RGB_DEPS, fn(relativeLuminance)],
   },
-  'film-grain': { kind: 'pixel', mainFn: applyFilmGrain, deps: [fn(clamp8), fn(mulberry32)] },
+  'film-grain': {
+    kind: 'pixel',
+    mainFn: applyFilmGrain,
+    deps: [fn(clamp8), fn(mulberry32), ...RESOLUTION_SCALE_DEPS],
+  },
   'analog-grain': {
     kind: 'pixel',
     mainFn: applyAnalogGrain,
@@ -128,6 +138,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
       fn(mulberry32),
       ...LUMINANCE_GRID_DEPS,
       ...SOBEL_DEPS,
+      ...RESOLUTION_SCALE_DEPS,
       fn(boxBlurField),
       fn(generateWhiteNoiseField),
       fn(shapeGrainClumps),
@@ -147,6 +158,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
       fn(hslToRgb),
       ...LUMINANCE_GRID_DEPS,
       ...SOBEL_DEPS,
+      ...RESOLUTION_SCALE_DEPS,
       fn(boxBlurField),
       fn(srgbToLinear),
       fn(linearToSrgb),
@@ -154,13 +166,17 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
     ],
   },
   posterize: { kind: 'pixel', mainFn: applyPosterize, deps: [fn(clamp8)] },
-  'rgb-channel-shift': { kind: 'pixel', mainFn: applyRgbChannelShift, deps: [fn(clampIndex)] },
-  pixelation: { kind: 'pixel', mainFn: applyPixelation, deps: [] },
+  'rgb-channel-shift': {
+    kind: 'pixel',
+    mainFn: applyRgbChannelShift,
+    deps: [fn(clampIndex), ...RESOLUTION_SCALE_DEPS],
+  },
+  pixelation: { kind: 'pixel', mainFn: applyPixelation, deps: [...RESOLUTION_SCALE_DEPS] },
   'ordered-dithering': { kind: 'pixel', mainFn: applyOrderedDithering, deps: [fn(clamp8)] },
   halftone: {
     kind: 'pixel',
     mainFn: applyHalftone,
-    deps: [...HEX_TO_RGB_DEPS, fn(relativeLuminance)],
+    deps: [...HEX_TO_RGB_DEPS, fn(relativeLuminance), ...RESOLUTION_SCALE_DEPS],
   },
   'pixel-sort': {
     kind: 'pixel',
@@ -180,12 +196,18 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
   'cross-hatch': {
     kind: 'canvas',
     mainFn: renderCrossHatch,
-    deps: [...LUMINANCE_GRID_DEPS, fn(computeHatchLines)],
+    deps: [...LUMINANCE_GRID_DEPS, ...RESOLUTION_SCALE_DEPS, fn(computeHatchLines)],
   },
   stippling: {
     kind: 'canvas',
     mainFn: renderStippling,
-    deps: [fn(clamp01), fn(mulberry32), ...LUMINANCE_GRID_DEPS, fn(computeStippleDots)],
+    deps: [
+      fn(clamp01),
+      fn(mulberry32),
+      ...LUMINANCE_GRID_DEPS,
+      ...RESOLUTION_SCALE_DEPS,
+      fn(computeStippleDots),
+    ],
   },
   painterly: {
     kind: 'canvas',
@@ -197,6 +219,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
       fn(averageColor),
       ...LUMINANCE_GRID_DEPS,
       ...SOBEL_DEPS,
+      ...RESOLUTION_SCALE_DEPS,
       fn(mulberry32),
       fn(flowAngleAt),
       fn(computeBrushStrokes),
@@ -210,6 +233,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
       fn(rgbToHex),
       fn(colorAt),
       fn(averageColor),
+      ...RESOLUTION_SCALE_DEPS,
       fn(mulberry32),
       fn(flowAngleAt),
       fn(computeFlowLines),
@@ -234,6 +258,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
       fn(rgbToHex),
       fn(colorAt),
       ...LUMINANCE_GRID_DEPS,
+      ...RESOLUTION_SCALE_DEPS,
       fn(mulberry32),
       fn(computeParticlePositions),
     ],
@@ -244,6 +269,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
     deps: [
       ...HEX_TO_RGB_DEPS,
       ...LUMINANCE_GRID_DEPS,
+      ...RESOLUTION_SCALE_DEPS,
       fn(buildInitialGrid),
       fn(countLiveNeighbors),
       fn(stepGameOfLife),
@@ -269,12 +295,18 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
   kuwahara: {
     kind: 'pixel',
     mainFn: applyKuwahara,
-    deps: [fn(clamp8), ...LUMINANCE_GRID_DEPS, fn(quadrantStats), fn(kuwaharaPixel)],
+    deps: [
+      fn(clamp8),
+      ...LUMINANCE_GRID_DEPS,
+      ...RESOLUTION_SCALE_DEPS,
+      fn(quadrantStats),
+      fn(kuwaharaPixel),
+    ],
   },
   'blur-sharpen': {
     kind: 'pixel',
     mainFn: applyBlurSharpen,
-    deps: [fn(clamp8), fn(gaussianKernel1D), fn(gaussianBlur)],
+    deps: [fn(clamp8), ...RESOLUTION_SCALE_DEPS, fn(gaussianKernel1D), fn(gaussianBlur)],
   },
   'print-surface': {
     kind: 'pixel',
@@ -283,6 +315,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
       fn(clamp8),
       fn(mulberry32),
       ...LUMINANCE_GRID_DEPS,
+      ...RESOLUTION_SCALE_DEPS,
       fn(boxBlurField),
       fn(generateWhiteNoiseField),
       fn(srgbToLinear),

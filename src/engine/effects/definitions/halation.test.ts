@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { applyHalation, highlightMaskAt } from './halation'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
+
+/** radius is scaled by canvas resolution (see resolutionScale.ts) — this converts a desired
+ * *effective* pixel radius back into the raw param value that produces it at this test canvas's
+ * (tiny, non-reference) size. */
+function rawFor(effectivePx: number, width: number, height: number): number {
+  return effectivePx / resolutionScaleFactor(width, height)
+}
 
 function makeFlatImage(width: number, height: number, value: number): Uint8ClampedArray {
   const data = new Uint8ClampedArray(width * height * 4)
@@ -57,21 +65,21 @@ describe('applyHalation', () => {
   it('is a no-op at amount 0', () => {
     const data = makeSpotlightImage(24, 24)
     const before = [...data]
-    applyHalation(data, 24, 24, { amount: 0, radius: 10 }, 0)
+    applyHalation(data, 24, 24, { amount: 0, radius: rawFor(10, 24, 24) }, 0)
     expect([...data]).toEqual(before)
   })
 
   it('leaves a fully dark image untouched (nothing crosses the highlight threshold)', () => {
     const data = makeFlatImage(16, 16, 10)
     const before = [...data]
-    applyHalation(data, 16, 16, { amount: 0.8, radius: 10, threshold: 0.75 }, 0)
+    applyHalation(data, 16, 16, { amount: 0.8, radius: rawFor(10, 16, 16), threshold: 0.75 }, 0)
     expect([...data]).toEqual(before)
   })
 
   it('brightens pixels near a highlight but leaves pixels far away untouched', () => {
     const data = makeSpotlightImage(40, 40)
     const before = [...data]
-    applyHalation(data, 40, 40, { amount: 0.8, radius: 8, threshold: 0.6 }, 0)
+    applyHalation(data, 40, 40, { amount: 0.8, radius: rawFor(8, 40, 40), threshold: 0.6 }, 0)
 
     // Just outside the spotlight square should have gained some glow.
     const nearIndex = (20 * 40 + 22) * 4
@@ -84,7 +92,13 @@ describe('applyHalation', () => {
 
   it('tints the glow toward the requested hue rather than copying the highlight color', () => {
     const data = makeSpotlightImage(30, 30)
-    applyHalation(data, 30, 30, { amount: 1, radius: 10, threshold: 0.6, hue: 0, saturation: 1 }, 0)
+    applyHalation(
+      data,
+      30,
+      30,
+      { amount: 1, radius: rawFor(10, 30, 30), threshold: 0.6, hue: 0, saturation: 1 },
+      0,
+    )
     // Just outside the (white) spotlight, a red-hued glow should push red above green/blue.
     const i = (15 * 30 + 19) * 4
     expect(data[i]).toBeGreaterThan(data[i + 2])
@@ -92,7 +106,7 @@ describe('applyHalation', () => {
 
   it('keeps values within the valid 0-255 range at high amount', () => {
     const data = makeSpotlightImage(24, 24)
-    applyHalation(data, 24, 24, { amount: 1, radius: 12, threshold: 0.5 }, 0)
+    applyHalation(data, 24, 24, { amount: 1, radius: rawFor(12, 24, 24), threshold: 0.5 }, 0)
     for (const value of data) {
       expect(value).toBeGreaterThanOrEqual(0)
       expect(value).toBeLessThanOrEqual(255)
@@ -101,10 +115,10 @@ describe('applyHalation', () => {
 
   it('spreads glow further from the source at a larger radius', () => {
     const small = makeSpotlightImage(50, 50)
-    applyHalation(small, 50, 50, { amount: 0.8, radius: 4, threshold: 0.6 }, 0)
+    applyHalation(small, 50, 50, { amount: 0.8, radius: rawFor(4, 50, 50), threshold: 0.6 }, 0)
 
     const large = makeSpotlightImage(50, 50)
-    applyHalation(large, 50, 50, { amount: 0.8, radius: 20, threshold: 0.6 }, 0)
+    applyHalation(large, 50, 50, { amount: 0.8, radius: rawFor(20, 50, 50), threshold: 0.6 }, 0)
 
     // A point well outside the spotlight should glow more under the larger radius.
     const i = (25 * 50 + 32) * 4
@@ -119,7 +133,7 @@ describe('applyHalation', () => {
       50,
       {
         amount: 0.8,
-        radius: 16,
+        radius: rawFor(16, 50, 50),
         threshold: 0.6,
         edgePreservation: 1,
       },
@@ -133,7 +147,7 @@ describe('applyHalation', () => {
       50,
       {
         amount: 0.8,
-        radius: 16,
+        radius: rawFor(16, 50, 50),
         threshold: 0.6,
         edgePreservation: 0,
       },

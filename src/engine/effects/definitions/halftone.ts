@@ -1,6 +1,7 @@
 import type { EffectDefinition } from '@/types'
 import { hexToRgb, relativeLuminance } from '../canvas2d/colorMath'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 /**
  * Classic dot-screen halftone: the image is replaced by a grid of solid-color dots whose radius
@@ -10,10 +11,8 @@ import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixe
  * already drawn by earlier cells.
  */
 export const applyHalftone: PixelTransform = (data, width, height, params) => {
-  const cellSize = Math.max(
-    2,
-    Math.round(typeof params.cellSize === 'number' ? params.cellSize : 10),
-  )
+  const rawCellSize = typeof params.cellSize === 'number' ? params.cellSize : 10
+  const cellSize = Math.max(2, Math.round(rawCellSize * resolutionScaleFactor(width, height)))
   const dotColor = hexToRgb(typeof params.dotColor === 'string' ? params.dotColor : '#000000')
   const background = hexToRgb(typeof params.background === 'string' ? params.background : '#ffffff')
   const original = Uint8ClampedArray.from(data)

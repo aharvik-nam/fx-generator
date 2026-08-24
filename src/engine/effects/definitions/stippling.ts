@@ -2,6 +2,7 @@ import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { clamp01 } from '../canvas2d/colorMath'
 import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
 import { mulberry32 } from '../../random/seededRandom'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export type StippleDot = { x: number; y: number; radius: number }
 
@@ -54,12 +55,12 @@ export function renderStippling(
   params: EffectParams,
   seed: number,
 ): void {
-  const cellSize = Math.max(
-    2,
-    Math.round(typeof params.cellSize === 'number' ? params.cellSize : 6),
-  )
+  const scale = resolutionScaleFactor(width, height)
+  const rawCellSize = typeof params.cellSize === 'number' ? params.cellSize : 6
+  const cellSize = Math.max(2, Math.round(rawCellSize * scale))
   const density = typeof params.density === 'number' ? params.density : 1.5
-  const dotSize = typeof params.dotSize === 'number' ? params.dotSize : 1.5
+  const rawDotSize = typeof params.dotSize === 'number' ? params.dotSize : 1.5
+  const dotSize = rawDotSize * scale
   const dotColor = typeof params.dotColor === 'string' ? params.dotColor : '#000000'
   const background = typeof params.background === 'string' ? params.background : '#ffffff'
 

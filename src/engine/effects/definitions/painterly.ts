@@ -3,6 +3,7 @@ import { averageColor, colorAt, rgbToHex } from '../canvas2d/colorMath'
 import { computeLuminanceGrid, sobelGradientAt } from '../canvas2d/sobelGradient'
 import { flowAngleAt } from '../canvas2d/flowField'
 import { mulberry32 } from '../../random/seededRandom'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export type BrushStroke = { x: number; y: number; angle: number; length: number }
 
@@ -21,6 +22,7 @@ export function computeBrushStrokes(
   spacing: number,
   strokeLength: number,
   seed: number,
+  scale = 1,
 ): BrushStroke[] {
   // Below this gradient magnitude a point is considered "flat" — there's no reliable edge
   // direction to follow, so the stroke falls back to `flowAngleAt` instead of a computed one.
@@ -41,7 +43,7 @@ export function computeBrushStrokes(
       const angle =
         gradient.magnitude > flatMagnitudeThreshold
           ? Math.atan2(gradient.gy, gradient.gx) + Math.PI / 2
-          : flowAngleAt(x, y, seed)
+          : flowAngleAt(x, y, seed, scale)
 
       strokes.push({ x, y, angle, length: strokeLength * (0.7 + random() * 0.6) })
     }
@@ -58,13 +60,17 @@ export function renderPainterly(
   params: EffectParams,
   seed: number,
 ): void {
-  const spacing = Math.max(3, Math.round(typeof params.spacing === 'number' ? params.spacing : 10))
-  const strokeLength = typeof params.strokeLength === 'number' ? params.strokeLength : 16
-  const strokeWidth = typeof params.strokeWidth === 'number' ? params.strokeWidth : 3
+  const scale = resolutionScaleFactor(width, height)
+  const rawSpacing = typeof params.spacing === 'number' ? params.spacing : 10
+  const spacing = Math.max(3, Math.round(rawSpacing * scale))
+  const rawStrokeLength = typeof params.strokeLength === 'number' ? params.strokeLength : 16
+  const strokeLength = rawStrokeLength * scale
+  const rawStrokeWidth = typeof params.strokeWidth === 'number' ? params.strokeWidth : 3
+  const strokeWidth = rawStrokeWidth * scale
 
   const source = ctx.getImageData(0, 0, width, height)
   const luminance = computeLuminanceGrid(source.data, width, height)
-  const strokes = computeBrushStrokes(luminance, width, height, spacing, strokeLength, seed)
+  const strokes = computeBrushStrokes(luminance, width, height, spacing, strokeLength, seed, scale)
 
   ctx.fillStyle = rgbToHex(averageColor(source.data))
   ctx.fillRect(0, 0, width, height)

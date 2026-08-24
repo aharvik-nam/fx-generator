@@ -1,11 +1,10 @@
 import type { EffectDefinition } from '@/types'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export const applyPixelation: PixelTransform = (data, width, height, params) => {
-  const blockSize = Math.max(
-    1,
-    Math.round(typeof params.blockSize === 'number' ? params.blockSize : 12),
-  )
+  const rawBlockSize = typeof params.blockSize === 'number' ? params.blockSize : 12
+  const blockSize = Math.max(1, Math.round(rawBlockSize * resolutionScaleFactor(width, height)))
   if (blockSize <= 1) return
 
   for (let blockY = 0; blockY < height; blockY += blockSize) {

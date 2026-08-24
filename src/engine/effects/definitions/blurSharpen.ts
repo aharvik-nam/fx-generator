@@ -1,6 +1,7 @@
 import type { EffectDefinition } from '@/types'
 import { clamp8 } from '../canvas2d/colorMath'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 /** A discrete 1D Gaussian kernel for the given sigma, normalized to sum to 1. Radius is 3*sigma
  * (rounded up), enough to capture the vast majority of the Gaussian's mass. */
@@ -86,7 +87,8 @@ export const applyBlurSharpen: PixelTransform = (data, width, height, params) =>
   const amount = typeof params.amount === 'number' ? params.amount : 0
   if (amount === 0) return
 
-  const blurred = gaussianBlur(data, width, height, radius)
+  const sigma = radius * resolutionScaleFactor(width, height)
+  const blurred = gaussianBlur(data, width, height, sigma)
   for (let p = 0; p < width * height; p++) {
     const i = p * 4
     const bi = p * 3

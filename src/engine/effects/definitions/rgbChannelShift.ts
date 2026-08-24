@@ -1,5 +1,6 @@
 import type { EffectDefinition } from '@/types'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export function clampIndex(value: number, max: number): number {
   if (value < 0) return 0
@@ -12,9 +13,10 @@ export const applyRgbChannelShift: PixelTransform = (data, width, height, params
   const angleDeg = typeof params.angle === 'number' ? params.angle : 0
   if (amount === 0) return
 
+  const scaledAmount = amount * resolutionScaleFactor(width, height)
   const angleRad = (angleDeg * Math.PI) / 180
-  const dx = Math.round(amount * Math.cos(angleRad))
-  const dy = Math.round(amount * Math.sin(angleRad))
+  const dx = Math.round(scaledAmount * Math.cos(angleRad))
+  const dy = Math.round(scaledAmount * Math.sin(angleRad))
 
   const source = Uint8ClampedArray.from(data)
   const maxX = width - 1
@@ -45,7 +47,7 @@ export const rgbChannelShiftEffect: EffectDefinition = {
   rendererKind: 'canvas2d',
   usesSeed: false,
   paramSchema: {
-    amount: { kind: 'slider', min: 0, max: 50, step: 1, default: 8, label: 'Mengde (px)' },
+    amount: { kind: 'slider', min: 0, max: 50, step: 1, default: 8, label: 'Mengde' },
     angle: { kind: 'slider', min: 0, max: 360, step: 1, default: 0, label: 'Vinkel' },
   },
   createRenderer: () => createPixelEffectRenderer(applyRgbChannelShift),

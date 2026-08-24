@@ -2,6 +2,7 @@ import type { EffectDefinition } from '@/types'
 import { hexToRgb } from '../canvas2d/colorMath'
 import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 /** Downsamples the image into a `cols` x `rows` grid of cells, each "alive" if its average
  * luminance is darker than `threshold` — the starting generation for the automaton. */
@@ -87,10 +88,8 @@ export function runGenerations(
  * randomness) way to let a simple emergent rule reinterpret the image's shapes.
  */
 export const applyCellularAutomaton: PixelTransform = (data, width, height, params) => {
-  const cellSize = Math.max(
-    2,
-    Math.round(typeof params.cellSize === 'number' ? params.cellSize : 10),
-  )
+  const rawCellSize = typeof params.cellSize === 'number' ? params.cellSize : 10
+  const cellSize = Math.max(2, Math.round(rawCellSize * resolutionScaleFactor(width, height)))
   const generations = Math.max(
     0,
     Math.round(typeof params.generations === 'number' ? params.generations : 4),

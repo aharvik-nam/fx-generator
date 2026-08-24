@@ -2,6 +2,7 @@ import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { averageColor, colorAt, rgbToHex } from '../canvas2d/colorMath'
 import { flowAngleAt } from '../canvas2d/flowField'
 import { mulberry32 } from '../../random/seededRandom'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export type FlowLine = { points: { x: number; y: number }[] }
 
@@ -19,6 +20,7 @@ export function computeFlowLines(
   steps: number,
   stepLength: number,
   seed: number,
+  scale = 1,
 ): FlowLine[] {
   const random = mulberry32(seed)
   const lines: FlowLine[] = []
@@ -32,7 +34,7 @@ export function computeFlowLines(
       const points = [{ x, y }]
 
       for (let step = 0; step < steps; step++) {
-        const angle = flowAngleAt(x, y, seed)
+        const angle = flowAngleAt(x, y, seed, scale)
         x += Math.cos(angle) * stepLength
         y += Math.sin(angle) * stepLength
         if (x < 0 || x >= width || y < 0 || y >= height) break
@@ -54,13 +56,17 @@ export function renderFlowField(
   params: EffectParams,
   seed: number,
 ): void {
-  const spacing = Math.max(4, Math.round(typeof params.spacing === 'number' ? params.spacing : 14))
+  const scale = resolutionScaleFactor(width, height)
+  const rawSpacing = typeof params.spacing === 'number' ? params.spacing : 14
+  const spacing = Math.max(4, Math.round(rawSpacing * scale))
   const steps = Math.max(2, Math.round(typeof params.steps === 'number' ? params.steps : 24))
-  const stepLength = typeof params.stepLength === 'number' ? params.stepLength : 4
-  const lineWidth = typeof params.lineWidth === 'number' ? params.lineWidth : 1.5
+  const rawStepLength = typeof params.stepLength === 'number' ? params.stepLength : 4
+  const stepLength = rawStepLength * scale
+  const rawLineWidth = typeof params.lineWidth === 'number' ? params.lineWidth : 1.5
+  const lineWidth = rawLineWidth * scale
 
   const source = ctx.getImageData(0, 0, width, height)
-  const lines = computeFlowLines(width, height, spacing, steps, stepLength, seed)
+  const lines = computeFlowLines(width, height, spacing, steps, stepLength, seed, scale)
 
   ctx.fillStyle = rgbToHex(averageColor(source.data))
   ctx.fillRect(0, 0, width, height)

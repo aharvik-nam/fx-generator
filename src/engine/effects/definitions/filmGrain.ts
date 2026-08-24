@@ -2,14 +2,17 @@ import type { EffectDefinition } from '@/types'
 import { clamp8 } from '../canvas2d/colorMath'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
 import { mulberry32 } from '../../random/seededRandom'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 /**
  * Noise is generated per size×size block (not per pixel) so `size` reads as a visible grain
- * scale rather than just changing the noise's spatial frequency at the same amplitude.
+ * scale rather than just changing the noise's spatial frequency at the same amplitude. `size`
+ * is scaled by canvas resolution so the same param value looks the same regardless of image size.
  */
 export const applyFilmGrain: PixelTransform = (data, width, height, params, seed) => {
   const amount = typeof params.amount === 'number' ? params.amount : 0.15
-  const size = typeof params.size === 'number' ? Math.max(1, Math.round(params.size)) : 1
+  const rawSize = typeof params.size === 'number' ? params.size : 1
+  const size = Math.max(1, Math.round(rawSize * resolutionScaleFactor(width, height)))
   const random = mulberry32(seed)
   const strength = amount * 80
 

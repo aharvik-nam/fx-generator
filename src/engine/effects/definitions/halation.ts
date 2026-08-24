@@ -3,6 +3,7 @@ import { clamp01, clamp8, hslToRgb } from '../canvas2d/colorMath'
 import { computeLuminanceGrid, sobelGradientAt } from '../canvas2d/sobelGradient'
 import { boxBlurField, linearToSrgb, srgbToLinear } from '../canvas2d/grainNoise'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
+import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 /**
  * A soft-knee highlight extraction (the same shape a compressor's knee uses): 0 well below
@@ -29,7 +30,8 @@ export function highlightMaskAt(luminance01: number, threshold: number, softKnee
  */
 export const applyHalation: PixelTransform = (data, width, height, params) => {
   const amount = typeof params.amount === 'number' ? params.amount : 0.4
-  const radius = typeof params.radius === 'number' ? Math.max(1, params.radius) : 18
+  const rawRadius = typeof params.radius === 'number' ? Math.max(1, params.radius) : 18
+  const radius = rawRadius * resolutionScaleFactor(width, height)
   const threshold = typeof params.threshold === 'number' ? params.threshold : 0.75
   const softKnee = typeof params.softKnee === 'number' ? params.softKnee : 0.15
   const hue = typeof params.hue === 'number' ? params.hue : 25
