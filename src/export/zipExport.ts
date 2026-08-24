@@ -7,14 +7,13 @@ export type ZipExportOptions = {
   sourceBitmap: ImageBitmap
   originalFile: File
   project: ImageProject
-  palette: string[]
 }
 
 export type ZipExportResult = { blob: Blob; filename: string }
 
 /** Bundles the rendered image, recipe.md, and project.json (the full project for later reload). */
 export async function buildProjectZip(options: ZipExportOptions): Promise<ZipExportResult> {
-  const { sourceBitmap, originalFile, project, palette } = options
+  const { sourceBitmap, originalFile, project } = options
 
   const imageResult = await exportImage({
     sourceBitmap,
@@ -24,7 +23,7 @@ export async function buildProjectZip(options: ZipExportOptions): Promise<ZipExp
     baseName: project.name,
   })
 
-  const recipeMarkdown = project.recipe.customMarkdown ?? generateRecipeMarkdown(project, palette)
+  const recipeMarkdown = generateRecipeMarkdown(project)
 
   const zip = new JSZip()
   zip.file(imageResult.filename, imageResult.blob)

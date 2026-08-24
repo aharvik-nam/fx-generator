@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react'
+import { useId, useState } from 'react'
 import { AlertTriangle, Download, FileArchive, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,8 +21,6 @@ import {
 } from '@/components/ui/select'
 import { Slider } from '@/components/ui/slider'
 import { useProjectStore } from '@/state/projectStore'
-import { RenderPipeline } from '@/engine/pipeline/renderPipeline'
-import { extractDominantPaletteFromCanvas } from '@/engine/color/palette'
 import { downloadBlob, exportImage } from './imageExport'
 import { buildProjectZip } from './zipExport'
 import type { ExportImageFormat, MetadataPolicy } from '@/types'
@@ -50,9 +48,7 @@ export function ExportDialog() {
   const project = useProjectStore((state) => state.project)
   const originalFile = useProjectStore((state) => state.assets.originalFile)
   const originalBitmap = useProjectStore((state) => state.assets.originalBitmap)
-  const previewBitmap = useProjectStore((state) => state.assets.previewBitmap)
   const updateExportSettings = useProjectStore((state) => state.updateExportSettings)
-  const pipelineRef = useRef(new RenderPipeline())
 
   const maxDimensionInputId = useId()
 
@@ -92,17 +88,10 @@ export function ExportDialog() {
     setIsZipExporting(true)
     setExportError(null)
     try {
-      const palette = previewBitmap
-        ? extractDominantPaletteFromCanvas(
-            pipelineRef.current.compute(previewBitmap, project.effects, 'preview'),
-            5,
-          )
-        : []
       const result = await buildProjectZip({
         sourceBitmap: originalBitmap,
         originalFile,
         project: { ...project, exportSettings: resolvedSettings },
-        palette,
       })
       downloadBlob(result.blob, result.filename)
       setOpen(false)
