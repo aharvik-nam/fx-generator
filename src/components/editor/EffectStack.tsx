@@ -13,6 +13,14 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { Layers } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useProjectStore } from '@/state/projectStore'
 import type { EffectNode } from '@/types'
 import { EffectStackItem } from './EffectStackItem'
@@ -27,6 +35,8 @@ export function EffectStack() {
   const project = useProjectStore((state) => state.project)
   const effects = project?.effects ?? EMPTY_EFFECTS
   const reorderEffects = useProjectStore((state) => state.reorderEffects)
+  const selectedEffectId = useProjectStore((state) => state.selectedEffectId)
+  const selectEffect = useProjectStore((state) => state.selectEffect)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -50,17 +60,38 @@ export function EffectStack() {
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-      <SortableContext
-        items={effects.map((effect) => effect.id)}
-        strategy={verticalListSortingStrategy}
-      >
-        <ul className="flex flex-col gap-2 p-3">
-          {effects.map((effect) => (
-            <EffectStackItem key={effect.id} effect={effect} />
-          ))}
-        </ul>
-      </SortableContext>
-    </DndContext>
+    <div className="flex flex-col gap-2 p-3">
+      {effects.length > 1 && (
+        <div className="flex items-center justify-between gap-2">
+          <Label htmlFor="jump-to-effect" className="text-muted-foreground shrink-0 text-xs">
+            Hopp til effekt
+          </Label>
+          <Select value={selectedEffectId ?? ''} onValueChange={(id) => selectEffect(id)}>
+            <SelectTrigger id="jump-to-effect" size="sm" className="min-w-0 flex-1">
+              <SelectValue placeholder="Velg en effekt…" />
+            </SelectTrigger>
+            <SelectContent>
+              {effects.map((effect, index) => (
+                <SelectItem key={effect.id} value={effect.id}>
+                  {index + 1}. {effect.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext
+          items={effects.map((effect) => effect.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <ul className="flex flex-col gap-2">
+            {effects.map((effect) => (
+              <EffectStackItem key={effect.id} effect={effect} />
+            ))}
+          </ul>
+        </SortableContext>
+      </DndContext>
+    </div>
   )
 }

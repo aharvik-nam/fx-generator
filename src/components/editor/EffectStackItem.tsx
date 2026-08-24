@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { ChevronDown, Copy, GripVertical, RotateCcw, Trash2 } from 'lucide-react'
@@ -26,9 +26,11 @@ type EffectStackItemProps = { effect: EffectNode }
 
 export function EffectStackItem({ effect }: EffectStackItemProps) {
   const definition = getEffectDefinition(effect.type)
-  const [expanded, setExpanded] = useState(true)
 
   const selectedEffectId = useProjectStore((state) => state.selectedEffectId)
+  // Accordion behavior: only the selected effect is expanded, so a long stack stays scannable
+  // instead of every effect's full param panel piling up and pushing the canvas out of view.
+  const expanded = selectedEffectId === effect.id
   const selectEffect = useProjectStore((state) => state.selectEffect)
   const toggleEffectEnabled = useProjectStore((state) => state.toggleEffectEnabled)
   const setEffectOpacity = useProjectStore((state) => state.setEffectOpacity)
@@ -43,9 +45,17 @@ export function EffectStackItem({ effect }: EffectStackItemProps) {
 
   const style = { transform: CSS.Transform.toString(transform), transition }
 
+  const itemRef = useRef<HTMLLIElement>(null)
+  useEffect(() => {
+    if (expanded) itemRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }, [expanded])
+
   return (
     <li
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node)
+        itemRef.current = node
+      }}
       style={style}
       className={cn(
         'border-border bg-background rounded-md border',
@@ -72,7 +82,7 @@ export function EffectStackItem({ effect }: EffectStackItemProps) {
 
         <button
           type="button"
-          onClick={() => selectEffect(effect.id)}
+          onClick={() => selectEffect(expanded ? null : effect.id)}
           className={cn(
             'flex-1 truncate text-left text-sm font-medium',
             !effect.enabled && 'text-muted-foreground line-through',
@@ -117,7 +127,7 @@ export function EffectStackItem({ effect }: EffectStackItemProps) {
             expanded ? `Skjul parametere for ${effect.name}` : `Vis parametere for ${effect.name}`
           }
           aria-expanded={expanded}
-          onClick={() => setExpanded((value) => !value)}
+          onClick={() => selectEffect(expanded ? null : effect.id)}
         >
           <ChevronDown
             className={cn('size-3.5 transition-transform', !expanded && '-rotate-90')}

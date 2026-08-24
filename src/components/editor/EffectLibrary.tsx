@@ -3,6 +3,13 @@ import { Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getEffectDefinition, listEffectDefinitions } from '@/engine/effects/registry'
 import { EFFECT_CATEGORY_LABELS } from '@/engine/effects/categoryLabels'
@@ -20,8 +27,11 @@ function groupByCategory(definitions: EffectDefinition[]): [EffectCategory, Effe
   return [...groups.entries()]
 }
 
+const ALL_CATEGORIES = 'all'
+
 export function EffectLibrary() {
   const [search, setSearch] = useState('')
+  const [category, setCategory] = useState<EffectCategory | typeof ALL_CATEGORIES>(ALL_CATEGORIES)
   const hasProject = useProjectStore((state) => state.project !== null)
   const addEffect = useProjectStore((state) => state.addEffect)
   const presets = usePresetStore((state) => state.presets)
@@ -30,11 +40,13 @@ export function EffectLibrary() {
   const normalized = search.trim().toLowerCase()
 
   const groups = useMemo(() => {
-    const definitions = listEffectDefinitions().filter((definition) =>
-      definition.name.toLowerCase().includes(normalized),
+    const definitions = listEffectDefinitions().filter(
+      (definition) =>
+        definition.name.toLowerCase().includes(normalized) &&
+        (category === ALL_CATEGORIES || definition.category === category),
     )
     return groupByCategory(definitions)
-  }, [normalized])
+  }, [normalized, category])
 
   const matchingPresets = useMemo(
     () =>
@@ -48,7 +60,7 @@ export function EffectLibrary() {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-border border-b p-3">
+      <div className="border-border flex flex-col gap-2 border-b p-3">
         <Label htmlFor="effect-search" className="sr-only">
           Søk i effekter
         </Label>
@@ -59,6 +71,25 @@ export function EffectLibrary() {
           value={search}
           onChange={(event) => setSearch(event.target.value)}
         />
+        <Label htmlFor="effect-category" className="sr-only">
+          Filtrer på kategori
+        </Label>
+        <Select
+          value={category}
+          onValueChange={(value) => setCategory(value as EffectCategory | typeof ALL_CATEGORIES)}
+        >
+          <SelectTrigger id="effect-category" size="sm" className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_CATEGORIES}>Alle kategorier</SelectItem>
+            {Object.entries(EFFECT_CATEGORY_LABELS).map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className="flex-1 overflow-y-auto p-3">
         {!hasProject && (
@@ -110,10 +141,10 @@ export function EffectLibrary() {
               </ul>
             </section>
           )}
-          {groups.map(([category, definitions]) => (
-            <section key={category}>
+          {groups.map(([groupCategory, definitions]) => (
+            <section key={groupCategory}>
               <h3 className="text-muted-foreground mb-1.5 text-xs font-semibold tracking-wide uppercase">
-                {EFFECT_CATEGORY_LABELS[category]}
+                {EFFECT_CATEGORY_LABELS[groupCategory]}
               </h3>
               <ul className="flex flex-col gap-1">
                 {definitions.map((definition) => (
