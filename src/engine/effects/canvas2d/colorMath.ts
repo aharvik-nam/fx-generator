@@ -12,8 +12,8 @@ export function clamp01(value: number): number {
 
 export type Rgb = { r: number; g: number; b: number }
 
-const DEFAULT_RGB: Rgb = { r: 0, g: 0, b: 0 }
-
+/** No module-level fallback constant on purpose — see sobelGradientAt for why: a Recipe-exported,
+ * minified copy of this function must stay fully self-contained. */
 export function hexToRgb(hex: string): Rgb {
   const normalized = hex.replace('#', '').trim()
   const expanded =
@@ -23,9 +23,9 @@ export function hexToRgb(hex: string): Rgb {
           .map((c) => c + c)
           .join('')
       : normalized
-  if (expanded.length !== 6) return DEFAULT_RGB
+  if (expanded.length !== 6) return { r: 0, g: 0, b: 0 }
   const int = Number.parseInt(expanded, 16)
-  if (Number.isNaN(int)) return DEFAULT_RGB
+  if (Number.isNaN(int)) return { r: 0, g: 0, b: 0 }
   return { r: (int >> 16) & 255, g: (int >> 8) & 255, b: int & 255 }
 }
 

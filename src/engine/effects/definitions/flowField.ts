@@ -1,4 +1,4 @@
-import type { EffectDefinition, EffectRenderer } from '@/types'
+import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { averageColor, colorAt, rgbToHex } from '../canvas2d/colorMath'
 import { flowAngleAt } from '../canvas2d/flowField'
 import { mulberry32 } from '../../random/seededRandom'
@@ -45,42 +45,53 @@ export function computeFlowLines(
   return lines
 }
 
+/** The actual drawing logic, factored out of the EffectRenderer so it can also be reused
+ * verbatim (via `.toString()`) as portable, runnable code in the Recipe export. */
+export function renderFlowField(
+  ctx: OffscreenCanvasRenderingContext2D,
+  width: number,
+  height: number,
+  params: EffectParams,
+  seed: number,
+): void {
+  const spacing = Math.max(4, Math.round(typeof params.spacing === 'number' ? params.spacing : 14))
+  const steps = Math.max(2, Math.round(typeof params.steps === 'number' ? params.steps : 24))
+  const stepLength = typeof params.stepLength === 'number' ? params.stepLength : 4
+  const lineWidth = typeof params.lineWidth === 'number' ? params.lineWidth : 1.5
+
+  const source = ctx.getImageData(0, 0, width, height)
+  const lines = computeFlowLines(width, height, spacing, steps, stepLength, seed)
+
+  ctx.fillStyle = rgbToHex(averageColor(source.data))
+  ctx.fillRect(0, 0, width, height)
+
+  ctx.lineWidth = lineWidth
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  for (const line of lines) {
+    const start = line.points[0]
+    const sx = Math.min(width - 1, Math.max(0, Math.round(start.x)))
+    const sy = Math.min(height - 1, Math.max(0, Math.round(start.y)))
+    ctx.strokeStyle = rgbToHex(colorAt(source.data, width, sx, sy))
+    ctx.beginPath()
+    ctx.moveTo(line.points[0].x, line.points[0].y)
+    for (let i = 1; i < line.points.length; i++) {
+      ctx.lineTo(line.points[i].x, line.points[i].y)
+    }
+    ctx.stroke()
+  }
+}
+
 function createFlowFieldRenderer(): EffectRenderer {
   return {
     apply(surface, context) {
-      const { canvas, ctx } = surface
-      const width = canvas.width
-      const height = canvas.height
-      const params = context.params
-      const spacing = Math.max(
-        4,
-        Math.round(typeof params.spacing === 'number' ? params.spacing : 14),
+      renderFlowField(
+        surface.ctx,
+        surface.canvas.width,
+        surface.canvas.height,
+        context.params,
+        context.seed,
       )
-      const steps = Math.max(2, Math.round(typeof params.steps === 'number' ? params.steps : 24))
-      const stepLength = typeof params.stepLength === 'number' ? params.stepLength : 4
-      const lineWidth = typeof params.lineWidth === 'number' ? params.lineWidth : 1.5
-
-      const source = ctx.getImageData(0, 0, width, height)
-      const lines = computeFlowLines(width, height, spacing, steps, stepLength, context.seed)
-
-      ctx.fillStyle = rgbToHex(averageColor(source.data))
-      ctx.fillRect(0, 0, width, height)
-
-      ctx.lineWidth = lineWidth
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      for (const line of lines) {
-        const start = line.points[0]
-        const sx = Math.min(width - 1, Math.max(0, Math.round(start.x)))
-        const sy = Math.min(height - 1, Math.max(0, Math.round(start.y)))
-        ctx.strokeStyle = rgbToHex(colorAt(source.data, width, sx, sy))
-        ctx.beginPath()
-        ctx.moveTo(line.points[0].x, line.points[0].y)
-        for (let i = 1; i < line.points.length; i++) {
-          ctx.lineTo(line.points[i].x, line.points[i].y)
-        }
-        ctx.stroke()
-      }
     },
   }
 }

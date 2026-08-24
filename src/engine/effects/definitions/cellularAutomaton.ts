@@ -36,7 +36,7 @@ export function buildInitialGrid(
   return grid
 }
 
-function countLiveNeighbors(
+export function countLiveNeighbors(
   grid: boolean[],
   cols: number,
   rows: number,

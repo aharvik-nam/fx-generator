@@ -1,14 +1,10 @@
-import type { EffectDefinition, EffectRenderer } from '@/types'
+import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { averageColor, colorAt, rgbToHex } from '../canvas2d/colorMath'
 import { computeLuminanceGrid, sobelGradientAt } from '../canvas2d/sobelGradient'
 import { flowAngleAt } from '../canvas2d/flowField'
 import { mulberry32 } from '../../random/seededRandom'
 
 export type BrushStroke = { x: number; y: number; angle: number; length: number }
-
-/** Below this gradient magnitude a point is considered "flat" — there's no reliable edge
- * direction to follow, so the stroke falls back to `flowAngleAt` instead of a computed one. */
-const FLAT_MAGNITUDE_THRESHOLD = 5
 
 /**
  * Painterly brush strokes: a jittered grid of sample points, each producing one stroke. Where
@@ -26,6 +22,11 @@ export function computeBrushStrokes(
   strokeLength: number,
   seed: number,
 ): BrushStroke[] {
+  // Below this gradient magnitude a point is considered "flat" — there's no reliable edge
+  // direction to follow, so the stroke falls back to `flowAngleAt` instead of a computed one.
+  // Declared inline (not module-level) so a Recipe-exported, minified copy of this function
+  // stays fully self-contained.
+  const flatMagnitudeThreshold = 5
   const random = mulberry32(seed)
   const strokes: BrushStroke[] = []
 
@@ -38,7 +39,7 @@ export function computeBrushStrokes(
 
       const gradient = sobelGradientAt(luminance, width, height, x, y)
       const angle =
-        gradient.magnitude > FLAT_MAGNITUDE_THRESHOLD
+        gradient.magnitude > flatMagnitudeThreshold
           ? Math.atan2(gradient.gy, gradient.gx) + Math.PI / 2
           : flowAngleAt(x, y, seed)
 
@@ -48,45 +49,49 @@ export function computeBrushStrokes(
   return strokes
 }
 
+/** The actual drawing logic, factored out of the EffectRenderer so it can also be reused
+ * verbatim (via `.toString()`) as portable, runnable code in the Recipe export. */
+export function renderPainterly(
+  ctx: OffscreenCanvasRenderingContext2D,
+  width: number,
+  height: number,
+  params: EffectParams,
+  seed: number,
+): void {
+  const spacing = Math.max(3, Math.round(typeof params.spacing === 'number' ? params.spacing : 10))
+  const strokeLength = typeof params.strokeLength === 'number' ? params.strokeLength : 16
+  const strokeWidth = typeof params.strokeWidth === 'number' ? params.strokeWidth : 3
+
+  const source = ctx.getImageData(0, 0, width, height)
+  const luminance = computeLuminanceGrid(source.data, width, height)
+  const strokes = computeBrushStrokes(luminance, width, height, spacing, strokeLength, seed)
+
+  ctx.fillStyle = rgbToHex(averageColor(source.data))
+  ctx.fillRect(0, 0, width, height)
+
+  ctx.lineWidth = strokeWidth
+  ctx.lineCap = 'round'
+  for (const stroke of strokes) {
+    const dx = (Math.cos(stroke.angle) * stroke.length) / 2
+    const dy = (Math.sin(stroke.angle) * stroke.length) / 2
+    ctx.strokeStyle = rgbToHex(colorAt(source.data, width, stroke.x, stroke.y))
+    ctx.beginPath()
+    ctx.moveTo(stroke.x - dx, stroke.y - dy)
+    ctx.lineTo(stroke.x + dx, stroke.y + dy)
+    ctx.stroke()
+  }
+}
+
 function createPainterlyRenderer(): EffectRenderer {
   return {
     apply(surface, context) {
-      const { canvas, ctx } = surface
-      const width = canvas.width
-      const height = canvas.height
-      const params = context.params
-      const spacing = Math.max(
-        3,
-        Math.round(typeof params.spacing === 'number' ? params.spacing : 10),
-      )
-      const strokeLength = typeof params.strokeLength === 'number' ? params.strokeLength : 16
-      const strokeWidth = typeof params.strokeWidth === 'number' ? params.strokeWidth : 3
-
-      const source = ctx.getImageData(0, 0, width, height)
-      const luminance = computeLuminanceGrid(source.data, width, height)
-      const strokes = computeBrushStrokes(
-        luminance,
-        width,
-        height,
-        spacing,
-        strokeLength,
+      renderPainterly(
+        surface.ctx,
+        surface.canvas.width,
+        surface.canvas.height,
+        context.params,
         context.seed,
       )
-
-      ctx.fillStyle = rgbToHex(averageColor(source.data))
-      ctx.fillRect(0, 0, width, height)
-
-      ctx.lineWidth = strokeWidth
-      ctx.lineCap = 'round'
-      for (const stroke of strokes) {
-        const dx = (Math.cos(stroke.angle) * stroke.length) / 2
-        const dy = (Math.sin(stroke.angle) * stroke.length) / 2
-        ctx.strokeStyle = rgbToHex(colorAt(source.data, width, stroke.x, stroke.y))
-        ctx.beginPath()
-        ctx.moveTo(stroke.x - dx, stroke.y - dy)
-        ctx.lineTo(stroke.x + dx, stroke.y + dy)
-        ctx.stroke()
-      }
     },
   }
 }

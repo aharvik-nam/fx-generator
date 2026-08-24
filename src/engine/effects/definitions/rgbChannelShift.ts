@@ -1,7 +1,7 @@
 import type { EffectDefinition } from '@/types'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
 
-function clampIndex(value: number, max: number): number {
+export function clampIndex(value: number, max: number): number {
   if (value < 0) return 0
   if (value > max) return max
   return value

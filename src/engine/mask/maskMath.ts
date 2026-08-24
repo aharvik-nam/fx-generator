@@ -1,7 +1,12 @@
 import { clamp01, relativeLuminance, type Rgb } from '../effects/canvas2d/colorMath'
 import type { MaskReference } from '@/types'
 
-function linearGradientValue(nx: number, ny: number, angleDeg: number, feather: number): number {
+export function linearGradientValue(
+  nx: number,
+  ny: number,
+  angleDeg: number,
+  feather: number,
+): number {
   const angle = (angleDeg * Math.PI) / 180
   const dx = Math.cos(angle)
   const dy = Math.sin(angle)
@@ -12,7 +17,7 @@ function linearGradientValue(nx: number, ny: number, angleDeg: number, feather: 
   return clamp01(0.5 - projected / (2 * halfBand))
 }
 
-function radialGradientValue(
+export function radialGradientValue(
   nx: number,
   ny: number,
   centerX: number,

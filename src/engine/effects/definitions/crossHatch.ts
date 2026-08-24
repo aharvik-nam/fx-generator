@@ -1,4 +1,4 @@
-import type { EffectDefinition, EffectRenderer } from '@/types'
+import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
 
 export type HatchLine = { x1: number; y1: number; x2: number; y2: number }
@@ -36,35 +36,42 @@ export function computeHatchLines(
   return lines
 }
 
+/** The actual drawing logic, factored out of the EffectRenderer so it can also be reused
+ * verbatim (via `.toString()`) as portable, runnable code in the Recipe export. */
+export function renderCrossHatch(
+  ctx: OffscreenCanvasRenderingContext2D,
+  width: number,
+  height: number,
+  params: EffectParams,
+): void {
+  const cellSize = Math.max(
+    3,
+    Math.round(typeof params.cellSize === 'number' ? params.cellSize : 8),
+  )
+  const lineColor = typeof params.lineColor === 'string' ? params.lineColor : '#000000'
+  const background = typeof params.background === 'string' ? params.background : '#ffffff'
+
+  const source = ctx.getImageData(0, 0, width, height)
+  const luminance = computeLuminanceGrid(source.data, width, height)
+  const lines = computeHatchLines(luminance, width, height, cellSize)
+
+  ctx.fillStyle = background
+  ctx.fillRect(0, 0, width, height)
+
+  ctx.strokeStyle = lineColor
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  for (const line of lines) {
+    ctx.moveTo(line.x1, line.y1)
+    ctx.lineTo(line.x2, line.y2)
+  }
+  ctx.stroke()
+}
+
 function createCrossHatchRenderer(): EffectRenderer {
   return {
     apply(surface, context) {
-      const { canvas, ctx } = surface
-      const width = canvas.width
-      const height = canvas.height
-      const params = context.params
-      const cellSize = Math.max(
-        3,
-        Math.round(typeof params.cellSize === 'number' ? params.cellSize : 8),
-      )
-      const lineColor = typeof params.lineColor === 'string' ? params.lineColor : '#000000'
-      const background = typeof params.background === 'string' ? params.background : '#ffffff'
-
-      const source = ctx.getImageData(0, 0, width, height)
-      const luminance = computeLuminanceGrid(source.data, width, height)
-      const lines = computeHatchLines(luminance, width, height, cellSize)
-
-      ctx.fillStyle = background
-      ctx.fillRect(0, 0, width, height)
-
-      ctx.strokeStyle = lineColor
-      ctx.lineWidth = 1
-      ctx.beginPath()
-      for (const line of lines) {
-        ctx.moveTo(line.x1, line.y1)
-        ctx.lineTo(line.x2, line.y2)
-      }
-      ctx.stroke()
+      renderCrossHatch(surface.ctx, surface.canvas.width, surface.canvas.height, context.params)
     },
   }
 }

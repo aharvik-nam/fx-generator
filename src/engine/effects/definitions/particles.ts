@@ -1,13 +1,9 @@
-import type { EffectDefinition, EffectRenderer } from '@/types'
+import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { colorAt, rgbToHex } from '../canvas2d/colorMath'
 import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
 import { mulberry32 } from '../../random/seededRandom'
 
 export type Particle = { x: number; y: number; radius: number }
-
-/** Below this many attempts, give up spawning further particles — protects a fully (or nearly)
- * black image, where acceptance probability is ~0, from looping forever. */
-const ATTEMPTS_PER_PARTICLE = 40
 
 /**
  * Rejection-sampling particle scatter: repeatedly picks a uniformly random point and accepts it
@@ -25,9 +21,13 @@ export function computeParticlePositions(
   particleSize: number,
   seed: number,
 ): Particle[] {
+  // Below this many attempts, give up spawning further particles — protects a fully (or nearly)
+  // black image, where acceptance probability is ~0, from looping forever. Declared inline (not
+  // module-level) so a Recipe-exported, minified copy of this function stays fully self-contained.
+  const attemptsPerParticle = 40
   const random = mulberry32(seed)
   const particles: Particle[] = []
-  const maxAttempts = count * ATTEMPTS_PER_PARTICLE
+  const maxAttempts = count * attemptsPerParticle
   let attempts = 0
 
   while (particles.length < count && attempts < maxAttempts) {
@@ -42,40 +42,47 @@ export function computeParticlePositions(
   return particles
 }
 
+/** The actual drawing logic, factored out of the EffectRenderer so it can also be reused
+ * verbatim (via `.toString()`) as portable, runnable code in the Recipe export. */
+export function renderParticles(
+  ctx: OffscreenCanvasRenderingContext2D,
+  width: number,
+  height: number,
+  params: EffectParams,
+  seed: number,
+): void {
+  const count = Math.max(
+    10,
+    Math.round(typeof params.particleCount === 'number' ? params.particleCount : 1500),
+  )
+  const particleSize = typeof params.particleSize === 'number' ? params.particleSize : 1.5
+  const background = typeof params.background === 'string' ? params.background : '#000000'
+
+  const source = ctx.getImageData(0, 0, width, height)
+  const luminance = computeLuminanceGrid(source.data, width, height)
+  const particles = computeParticlePositions(luminance, width, height, count, particleSize, seed)
+
+  ctx.fillStyle = background
+  ctx.fillRect(0, 0, width, height)
+
+  for (const particle of particles) {
+    ctx.fillStyle = rgbToHex(colorAt(source.data, width, particle.x, particle.y))
+    ctx.beginPath()
+    ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
+    ctx.fill()
+  }
+}
+
 function createParticlesRenderer(): EffectRenderer {
   return {
     apply(surface, context) {
-      const { canvas, ctx } = surface
-      const width = canvas.width
-      const height = canvas.height
-      const params = context.params
-      const count = Math.max(
-        10,
-        Math.round(typeof params.particleCount === 'number' ? params.particleCount : 1500),
-      )
-      const particleSize = typeof params.particleSize === 'number' ? params.particleSize : 1.5
-      const background = typeof params.background === 'string' ? params.background : '#000000'
-
-      const source = ctx.getImageData(0, 0, width, height)
-      const luminance = computeLuminanceGrid(source.data, width, height)
-      const particles = computeParticlePositions(
-        luminance,
-        width,
-        height,
-        count,
-        particleSize,
+      renderParticles(
+        surface.ctx,
+        surface.canvas.width,
+        surface.canvas.height,
+        context.params,
         context.seed,
       )
-
-      ctx.fillStyle = background
-      ctx.fillRect(0, 0, width, height)
-
-      for (const particle of particles) {
-        ctx.fillStyle = rgbToHex(colorAt(source.data, width, particle.x, particle.y))
-        ctx.beginPath()
-        ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
-        ctx.fill()
-      }
     },
   }
 }

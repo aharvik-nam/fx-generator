@@ -5,7 +5,7 @@ import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixe
 type SortPixel = { r: number; g: number; b: number; a: number; luminance: number }
 
 /** Sorts one contiguous run of pixels in row `y` (columns [start, end)) by luminance. */
-function sortRun(
+export function sortRun(
   data: Uint8ClampedArray,
   width: number,
   y: number,

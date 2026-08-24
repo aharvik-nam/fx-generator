@@ -1,4 +1,4 @@
-import type { EffectDefinition, EffectRenderer } from '@/types'
+import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { clamp01 } from '../canvas2d/colorMath'
 import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
 import { mulberry32 } from '../../random/seededRandom'
@@ -45,43 +45,49 @@ export function computeStippleDots(
   return dots
 }
 
+/** The actual drawing logic, factored out of the EffectRenderer so it can also be reused
+ * verbatim (via `.toString()`) as portable, runnable code in the Recipe export. */
+export function renderStippling(
+  ctx: OffscreenCanvasRenderingContext2D,
+  width: number,
+  height: number,
+  params: EffectParams,
+  seed: number,
+): void {
+  const cellSize = Math.max(
+    2,
+    Math.round(typeof params.cellSize === 'number' ? params.cellSize : 6),
+  )
+  const density = typeof params.density === 'number' ? params.density : 1.5
+  const dotSize = typeof params.dotSize === 'number' ? params.dotSize : 1.5
+  const dotColor = typeof params.dotColor === 'string' ? params.dotColor : '#000000'
+  const background = typeof params.background === 'string' ? params.background : '#ffffff'
+
+  const source = ctx.getImageData(0, 0, width, height)
+  const luminance = computeLuminanceGrid(source.data, width, height)
+  const dots = computeStippleDots(luminance, width, height, cellSize, density, dotSize, seed)
+
+  ctx.fillStyle = background
+  ctx.fillRect(0, 0, width, height)
+
+  ctx.fillStyle = dotColor
+  for (const dot of dots) {
+    ctx.beginPath()
+    ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2)
+    ctx.fill()
+  }
+}
+
 function createStipplingRenderer(): EffectRenderer {
   return {
     apply(surface, context) {
-      const { canvas, ctx } = surface
-      const width = canvas.width
-      const height = canvas.height
-      const params = context.params
-      const cellSize = Math.max(
-        2,
-        Math.round(typeof params.cellSize === 'number' ? params.cellSize : 6),
-      )
-      const density = typeof params.density === 'number' ? params.density : 1.5
-      const dotSize = typeof params.dotSize === 'number' ? params.dotSize : 1.5
-      const dotColor = typeof params.dotColor === 'string' ? params.dotColor : '#000000'
-      const background = typeof params.background === 'string' ? params.background : '#ffffff'
-
-      const source = ctx.getImageData(0, 0, width, height)
-      const luminance = computeLuminanceGrid(source.data, width, height)
-      const dots = computeStippleDots(
-        luminance,
-        width,
-        height,
-        cellSize,
-        density,
-        dotSize,
+      renderStippling(
+        surface.ctx,
+        surface.canvas.width,
+        surface.canvas.height,
+        context.params,
         context.seed,
       )
-
-      ctx.fillStyle = background
-      ctx.fillRect(0, 0, width, height)
-
-      ctx.fillStyle = dotColor
-      for (const dot of dots) {
-        ctx.beginPath()
-        ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2)
-        ctx.fill()
-      }
     },
   }
 }

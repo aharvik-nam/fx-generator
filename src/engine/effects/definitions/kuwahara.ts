@@ -7,7 +7,7 @@ type QuadrantStats = Rgb & { variance: number }
 
 /** Mean color and luminance variance of one quadrant window (inclusive of its corner at the
  * pixel), clamped at the image border. */
-function quadrantStats(
+export function quadrantStats(
   data: Uint8ClampedArray,
   luminance: Float32Array,
   width: number,

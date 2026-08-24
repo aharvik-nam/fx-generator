@@ -3,11 +3,7 @@ import { clamp8, type Rgb } from '../canvas2d/colorMath'
 import { createPixelEffectRenderer, type PixelTransform } from '../canvas2d/pixelEffect'
 import { mulberry32 } from '../../random/seededRandom'
 
-/** Fixed iteration count rather than a convergence check, so runtime stays bounded regardless
- * of image content — high enough to settle on well-separated clusters in practice. */
-const KMEANS_ITERATIONS = 6
-
-function colorDistanceSq(a: Rgb, b: Rgb): number {
+export function colorDistanceSq(a: Rgb, b: Rgb): number {
   const dr = a.r - b.r
   const dg = a.g - b.g
   const db = a.b - b.b
@@ -81,7 +77,12 @@ export function computeKMeansPalette(
 
 export const applyColorQuantize: PixelTransform = (data, _width, _height, params, seed) => {
   const k = Math.max(2, Math.round(typeof params.colorCount === 'number' ? params.colorCount : 6))
-  const centroids = computeKMeansPalette(data, k, KMEANS_ITERATIONS, seed)
+  // Fixed iteration count rather than a convergence check, so runtime stays bounded regardless
+  // of image content — high enough to settle on well-separated clusters in practice. Declared
+  // inline (not module-level) so a Recipe-exported, minified copy of this function stays fully
+  // self-contained.
+  const kMeansIterations = 6
+  const centroids = computeKMeansPalette(data, k, kMeansIterations, seed)
 
   for (let i = 0; i < data.length; i += 4) {
     const idx = nearestCentroidIndex({ r: data[i], g: data[i + 1], b: data[i + 2] }, centroids)
