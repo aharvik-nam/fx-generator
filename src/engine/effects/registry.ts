@@ -5,6 +5,7 @@ import { duotoneEffect } from './definitions/duotone'
 import { filmGrainEffect } from './definitions/filmGrain'
 import { analogGrainEffect } from './definitions/analogGrain'
 import { vignetteEffect } from './definitions/vignette'
+import { halationEffect } from './definitions/halation'
 import { posterizeEffect } from './definitions/posterize'
 import { rgbChannelShiftEffect } from './definitions/rgbChannelShift'
 import { pixelationEffect } from './definitions/pixelation'
@@ -32,6 +33,7 @@ const EFFECT_DEFINITIONS: EffectDefinition[] = [
   filmGrainEffect,
   analogGrainEffect,
   vignetteEffect,
+  halationEffect,
   posterizeEffect,
   rgbChannelShiftEffect,
   pixelationEffect,

@@ -17,6 +17,7 @@ import {
   clamp8,
   colorAt,
   hexToRgb,
+  hslToRgb,
   relativeLuminance,
   rgbToHex,
 } from '../engine/effects/canvas2d/colorMath'
@@ -42,6 +43,7 @@ import {
   srgbToLinear,
 } from '../engine/effects/canvas2d/grainNoise'
 import { applyVignette } from '../engine/effects/definitions/vignette'
+import { applyHalation, highlightMaskAt } from '../engine/effects/definitions/halation'
 import { applyPosterize } from '../engine/effects/definitions/posterize'
 import { applyRgbChannelShift, clampIndex } from '../engine/effects/definitions/rgbChannelShift'
 import { applyPixelation } from '../engine/effects/definitions/pixelation'
@@ -131,6 +133,21 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
     ],
   },
   vignette: { kind: 'pixel', mainFn: applyVignette, deps: [fn(clamp01), fn(clamp8)] },
+  halation: {
+    kind: 'pixel',
+    mainFn: applyHalation,
+    deps: [
+      fn(clamp01),
+      fn(clamp8),
+      fn(hslToRgb),
+      ...LUMINANCE_GRID_DEPS,
+      ...SOBEL_DEPS,
+      fn(boxBlurField),
+      fn(srgbToLinear),
+      fn(linearToSrgb),
+      fn(highlightMaskAt),
+    ],
+  },
   posterize: { kind: 'pixel', mainFn: applyPosterize, deps: [fn(clamp8)] },
   'rgb-channel-shift': { kind: 'pixel', mainFn: applyRgbChannelShift, deps: [fn(clampIndex)] },
   pixelation: { kind: 'pixel', mainFn: applyPixelation, deps: [] },

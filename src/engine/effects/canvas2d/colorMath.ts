@@ -55,3 +55,34 @@ export function averageColor(data: Uint8ClampedArray): Rgb {
   }
   return { r: r / count, g: g / count, b: b / count }
 }
+
+/** HSL (hue in degrees, saturation/lightness 0-1) -> RGB (0-255). */
+export function hslToRgb(hue: number, saturation: number, lightness: number): Rgb {
+  const chroma = (1 - Math.abs(2 * lightness - 1)) * saturation
+  const huePrime = (((hue % 360) + 360) % 360) / 60
+  const x = chroma * (1 - Math.abs((huePrime % 2) - 1))
+  let r1 = 0
+  let g1 = 0
+  let b1 = 0
+  if (huePrime < 1) {
+    r1 = chroma
+    g1 = x
+  } else if (huePrime < 2) {
+    r1 = x
+    g1 = chroma
+  } else if (huePrime < 3) {
+    g1 = chroma
+    b1 = x
+  } else if (huePrime < 4) {
+    g1 = x
+    b1 = chroma
+  } else if (huePrime < 5) {
+    r1 = x
+    b1 = chroma
+  } else {
+    r1 = chroma
+    b1 = x
+  }
+  const m = lightness - chroma / 2
+  return { r: (r1 + m) * 255, g: (g1 + m) * 255, b: (b1 + m) * 255 }
+}

@@ -57,7 +57,10 @@ Implementert så langt:
   grovt — blandet etter en Fine/Balanced/Coarse-profil, lagt til som luminans i lineært lys, og
   formet av uavhengige skygge-, høylys- og detaljmasker pluss egne kontroller for kornstørrelse,
   mykhet, klumping og monokrom/farge-balanse; et mer analogt-tro og finmasket alternativ til det
-  enklere `Film grain`).
+  enklere `Film grain`) og **Halation** (varm glød rundt sterke høylys, som lys som spres tilbake
+  gjennom filmens emulsjon og base — en myk terskel/knekk plukker ut høylysene, blures separat fra
+  resten av bildet, tones til en valgt fargetone, og kantbevaring holder gløden nær kilden i
+  stedet for at det blir en generell bloom-effekt).
 - Angre/gjøre om med tastatursnarveier.
 - Metadata-panel: viser EXIF/GPS når tilgjengelig, med tydelig varsel for sensitive felt.
 - Eksporter til PNG/JPG/WebP i full oppløsning, med eksplisitt kontroll over om EXIF-metadata

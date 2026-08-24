@@ -16,6 +16,7 @@ describe('effect registry', () => {
       'film-grain',
       'analog-grain',
       'vignette',
+      'halation',
       'posterize',
       'rgb-channel-shift',
       'pixelation',
