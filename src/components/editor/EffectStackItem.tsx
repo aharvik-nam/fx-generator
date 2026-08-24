@@ -85,23 +85,13 @@ export function EffectStackItem({ effect }: EffectStackItemProps) {
           type="button"
           onClick={() => selectEffect(expanded ? null : effect.id)}
           className={cn(
-            'flex-1 truncate text-left text-sm font-medium',
+            'min-w-0 flex-1 truncate text-left text-sm font-medium',
             !effect.enabled && 'text-muted-foreground line-through',
           )}
         >
           {effect.name}
         </button>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-7"
-          aria-label={`Nullstill parametere for ${effect.name}`}
-          onClick={() => resetEffectParams(effect.id)}
-        >
-          <RotateCcw className="size-3.5" aria-hidden="true" />
-        </Button>
-        <SavePresetDialog effect={effect} />
         <Button
           variant="ghost"
           size="icon"
@@ -139,6 +129,19 @@ export function EffectStackItem({ effect }: EffectStackItemProps) {
 
       {expanded && (
         <div className="border-border flex flex-col gap-3 border-t px-3 py-3">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => resetEffectParams(effect.id)}
+            >
+              <RotateCcw className="size-3.5 shrink-0" aria-hidden="true" />
+              Nullstill
+            </Button>
+            <SavePresetDialog effect={effect} />
+          </div>
           <SliderParam
             label="Opacity"
             min={0}

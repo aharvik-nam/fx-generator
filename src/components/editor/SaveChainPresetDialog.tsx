@@ -41,9 +41,16 @@ export function SaveChainPresetDialog({ effects }: { effects: EffectNode[] }) {
       }}
     >
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm" disabled={effects.length === 0}>
-          <BookmarkPlus className="size-3.5" aria-hidden="true" />
-          Lagre kjede som preset
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={effects.length === 0}
+          className="w-full"
+          aria-label="Lagre effektkjede som preset"
+        >
+          <BookmarkPlus className="size-3.5 shrink-0" aria-hidden="true" />
+          Lagre som preset
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
