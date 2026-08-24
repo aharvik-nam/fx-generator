@@ -53,9 +53,10 @@ Implementert så langt:
   (speilvendte kiler rundt et senterpunkt), **Kuwahara** (kant-bevarende utjevning — glatter ut
   flate områder uten å myke opp kantene, i motsetning til vanlig uskarphet), **Uskarphet /
   skarphet** (én glidebryter fra full Gaussisk uskarphet, via ingen endring, til skarptegning med
-  unsharp mask) og **Analogt filmkorn** (korrelert, flerlags korn — fint mikrokorn pluss grovere,
-  formede klumper — lagt til som luminans i lineært lys, dempet der bildet allerede har detalj, og
-  formet etter fem filmtyper fra fin S/H til fargenegativ; et mer analogt-tro alternativ til det
+  unsharp mask) og **Analogt filmkorn** (prosedyregenerert korn i tre frekvensbånd — fint, middels,
+  grovt — blandet etter en Fine/Balanced/Coarse-profil, lagt til som luminans i lineært lys, og
+  formet av uavhengige skygge-, høylys- og detaljmasker pluss egne kontroller for kornstørrelse,
+  mykhet, klumping og monokrom/farge-balanse; et mer analogt-tro og finmasket alternativ til det
   enklere `Film grain`).
 - Angre/gjøre om med tastatursnarveier.
 - Metadata-panel: viser EXIF/GPS når tilgjengelig, med tydelig varsel for sensitive felt.

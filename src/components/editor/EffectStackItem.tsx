@@ -13,6 +13,7 @@ import { ApplyPresetSelect } from './ApplyPresetSelect'
 import { MaskControls } from './MaskControls'
 import { ParamControls } from './params/ParamControls'
 import { SavePresetDialog } from './SavePresetDialog'
+import { SeedControl } from './SeedControl'
 import { SliderParam } from './params/SliderParam'
 import { SelectParam } from './params/SelectParam'
 import type { BlendMode, EffectNode } from '@/types'
@@ -152,6 +153,7 @@ export function EffectStackItem({ effect }: EffectStackItemProps) {
             options={BLEND_MODE_SELECT_OPTIONS}
             onChange={(value) => setEffectBlendMode(effect.id, value as BlendMode)}
           />
+          {definition.usesSeed && <SeedControl effect={effect} />}
           <div className="border-border border-t border-dashed" />
           <MaskControls effect={effect} />
           <div className="border-border border-t border-dashed" />

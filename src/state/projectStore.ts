@@ -54,6 +54,8 @@ type ProjectStore = {
   toggleEffectEnabled: (id: string) => void
   setEffectOpacity: (id: string, opacity: number, options?: { commit?: boolean }) => void
   setEffectBlendMode: (id: string, blendMode: BlendMode) => void
+  setEffectSeed: (id: string, seed: number) => void
+  rerollEffectSeed: (id: string) => void
   updateEffectParam: (
     id: string,
     key: string,
@@ -305,6 +307,22 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         effects: project.effects.map((e) => (e.id === id ? { ...e, opacity } : e)),
       }),
     })
+  },
+
+  setEffectSeed: (id, seed) => {
+    const { project, history } = get()
+    if (!project) return
+    set({
+      history: pushHistory(history, project.effects),
+      project: touchProject({
+        ...project,
+        effects: project.effects.map((e) => (e.id === id ? { ...e, seed } : e)),
+      }),
+    })
+  },
+
+  rerollEffectSeed: (id) => {
+    get().setEffectSeed(id, Math.floor(Math.random() * 2 ** 31))
   },
 
   setEffectBlendMode: (id, blendMode) => {

@@ -31,7 +31,7 @@ import { applyDuotone } from '../engine/effects/definitions/duotone'
 import { applyFilmGrain } from '../engine/effects/definitions/filmGrain'
 import {
   applyAnalogGrain,
-  getGrainLookProfile,
+  getGrainProfileWeights,
   tonalGrainWeight,
 } from '../engine/effects/definitions/analogGrain'
 import {
@@ -126,7 +126,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
       fn(shapeGrainClumps),
       fn(srgbToLinear),
       fn(linearToSrgb),
-      fn(getGrainLookProfile),
+      fn(getGrainProfileWeights),
       fn(tonalGrainWeight),
     ],
   },
