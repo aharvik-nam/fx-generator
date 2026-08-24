@@ -24,6 +24,7 @@ import {
 import { useProjectStore } from '@/state/projectStore'
 import type { EffectNode } from '@/types'
 import { EffectStackItem } from './EffectStackItem'
+import { SaveChainPresetDialog } from './SaveChainPresetDialog'
 
 const EMPTY_EFFECTS: EffectNode[] = []
 
@@ -61,6 +62,7 @@ export function EffectStack() {
 
   return (
     <div className="flex flex-col gap-2 p-3">
+      <SaveChainPresetDialog effects={effects} />
       {effects.length > 1 && (
         <div className="flex items-center justify-between gap-2">
           <Label htmlFor="jump-to-effect" className="text-muted-foreground shrink-0 text-xs">

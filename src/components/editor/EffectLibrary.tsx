@@ -15,6 +15,7 @@ import { getEffectDefinition, listEffectDefinitions } from '@/engine/effects/reg
 import { EFFECT_CATEGORY_LABELS } from '@/engine/effects/categoryLabels'
 import { useProjectStore } from '@/state/projectStore'
 import { usePresetStore } from '@/state/presetStore'
+import { useChainPresetStore } from '@/state/chainPresetStore'
 import type { EffectCategory, EffectDefinition } from '@/types'
 
 function groupByCategory(definitions: EffectDefinition[]): [EffectCategory, EffectDefinition[]][] {
@@ -34,8 +35,11 @@ export function EffectLibrary() {
   const [category, setCategory] = useState<EffectCategory | typeof ALL_CATEGORIES>(ALL_CATEGORIES)
   const hasProject = useProjectStore((state) => state.project !== null)
   const addEffect = useProjectStore((state) => state.addEffect)
+  const addEffectsFromChainPreset = useProjectStore((state) => state.addEffectsFromChainPreset)
   const presets = usePresetStore((state) => state.presets)
   const deletePreset = usePresetStore((state) => state.deletePreset)
+  const chainPresets = useChainPresetStore((state) => state.chainPresets)
+  const deleteChainPreset = useChainPresetStore((state) => state.deleteChainPreset)
 
   const normalized = search.trim().toLowerCase()
 
@@ -56,6 +60,11 @@ export function EffectLibrary() {
           getEffectDefinition(preset.effectType).name.toLowerCase().includes(normalized),
       ),
     [presets, normalized],
+  )
+
+  const matchingChainPresets = useMemo(
+    () => chainPresets.filter((preset) => preset.name.toLowerCase().includes(normalized)),
+    [chainPresets, normalized],
   )
 
   return (
@@ -97,10 +106,54 @@ export function EffectLibrary() {
             Last opp et bilde for å begynne å legge til effekter.
           </p>
         )}
-        {groups.length === 0 && matchingPresets.length === 0 && (
-          <p className="text-muted-foreground text-sm">Ingen effekter matcher søket.</p>
-        )}
+        {groups.length === 0 &&
+          matchingPresets.length === 0 &&
+          matchingChainPresets.length === 0 && (
+            <p className="text-muted-foreground text-sm">Ingen effekter matcher søket.</p>
+          )}
         <div className="flex flex-col gap-4">
+          {matchingChainPresets.length > 0 && (
+            <section>
+              <h3 className="text-muted-foreground mb-1.5 text-xs font-semibold tracking-wide uppercase">
+                Dine effektkjeder
+              </h3>
+              <ul className="flex flex-col gap-1">
+                {matchingChainPresets.map((preset) => (
+                  <li key={preset.id} className="flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full flex-1 justify-between"
+                          disabled={!hasProject}
+                          aria-label={`Legg til effektkjede ${preset.name}`}
+                          onClick={() => addEffectsFromChainPreset(preset.effects)}
+                        >
+                          <span className="truncate">{preset.name}</span>
+                          <Plus className="shrink-0" aria-hidden="true" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {preset.effects.length} effekt{preset.effects.length === 1 ? '' : 'er'}:{' '}
+                        {preset.effects.map((effect) => effect.name).join(' → ')}
+                      </TooltipContent>
+                    </Tooltip>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 shrink-0"
+                      aria-label={`Slett effektkjede ${preset.name}`}
+                      onClick={() => void deleteChainPreset(preset.id)}
+                    >
+                      <Trash2 className="size-3.5" aria-hidden="true" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
           {matchingPresets.length > 0 && (
             <section>
               <h3 className="text-muted-foreground mb-1.5 text-xs font-semibold tracking-wide uppercase">
@@ -116,6 +169,7 @@ export function EffectLibrary() {
                           variant="outline"
                           className="w-full flex-1 justify-between"
                           disabled={!hasProject}
+                          aria-label={`Legg til preset ${preset.name}`}
                           onClick={() => addEffect(preset.effectType, preset.params)}
                         >
                           <span className="truncate">{preset.name}</span>

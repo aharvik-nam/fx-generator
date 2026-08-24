@@ -47,6 +47,7 @@ type ProjectStore = {
   clearLoadError: () => void
 
   addEffect: (type: string, paramsOverride?: EffectParams) => void
+  addEffectsFromChainPreset: (effects: EffectNode[]) => void
   removeEffect: (id: string) => void
   duplicateEffect: (id: string) => void
   reorderEffects: (activeId: string, overId: string) => void
@@ -221,6 +222,20 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       history: pushHistory(history, project.effects),
       project: touchProject({ ...project, effects: [...project.effects, node] }),
       selectedEffectId: node.id,
+    })
+  },
+
+  // Appends fresh copies of a saved chain preset's effects (new ids, so they don't collide with
+  // anything already in the stack) rather than replacing it — consistent with how a single-effect
+  // preset is added, and non-destructive of whatever the user already built.
+  addEffectsFromChainPreset: (effects) => {
+    const { project, history } = get()
+    if (!project || effects.length === 0) return
+    const nodes = effects.map((effect) => ({ ...structuredClone(effect), id: crypto.randomUUID() }))
+    set({
+      history: pushHistory(history, project.effects),
+      project: touchProject({ ...project, effects: [...project.effects, ...nodes] }),
+      selectedEffectId: nodes[nodes.length - 1].id,
     })
   },
 

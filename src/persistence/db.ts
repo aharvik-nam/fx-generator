@@ -1,5 +1,5 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import type { ImageProject, Preset, ShowcaseProject } from '@/types'
+import type { EffectChainPreset, ImageProject, Preset, ShowcaseProject } from '@/types'
 
 interface FxGeneratorDB extends DBSchema {
   projects: {
@@ -21,12 +21,16 @@ interface FxGeneratorDB extends DBSchema {
     value: Preset
     indexes: { 'by-effectType': string }
   }
+  chainPresets: {
+    key: string
+    value: EffectChainPreset
+  }
 }
 
 let dbPromise: Promise<IDBPDatabase<FxGeneratorDB>> | null = null
 
 export function getDb(): Promise<IDBPDatabase<FxGeneratorDB>> {
-  dbPromise ??= openDB<FxGeneratorDB>('fx-generator', 3, {
+  dbPromise ??= openDB<FxGeneratorDB>('fx-generator', 4, {
     upgrade(db, oldVersion) {
       if (oldVersion < 1) {
         const projects = db.createObjectStore('projects', { keyPath: 'id' })
@@ -40,6 +44,9 @@ export function getDb(): Promise<IDBPDatabase<FxGeneratorDB>> {
       if (oldVersion < 3) {
         const presets = db.createObjectStore('presets', { keyPath: 'id' })
         presets.createIndex('by-effectType', 'effectType')
+      }
+      if (oldVersion < 4) {
+        db.createObjectStore('chainPresets', { keyPath: 'id' })
       }
     },
   })

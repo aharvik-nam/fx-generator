@@ -5,6 +5,7 @@ import { MobilePanelBar } from '@/components/layout/MobilePanelBar'
 import { RightPanel } from '@/components/layout/RightPanel'
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts'
 import { usePresetStore } from '@/state/presetStore'
+import { useChainPresetStore } from '@/state/chainPresetStore'
 
 export function EditorView() {
   useKeyboardShortcuts()
@@ -12,9 +13,11 @@ export function EditorView() {
   // Loaded here (not inside EffectLibrary/EffectStack) because those live inside mobile Sheets
   // that don't mount until opened — EditorView is always mounted, so presets are ready either way.
   const loadPresets = usePresetStore((state) => state.loadPresets)
+  const loadChainPresets = useChainPresetStore((state) => state.loadChainPresets)
   useEffect(() => {
     void loadPresets()
-  }, [loadPresets])
+    void loadChainPresets()
+  }, [loadPresets, loadChainPresets])
 
   return (
     <div className="flex min-h-0 flex-1">

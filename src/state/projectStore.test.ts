@@ -114,6 +114,22 @@ describe('projectStore effect chain mutations', () => {
     expect(useProjectStore.getState().project!.effects[0].params).toEqual({ stops: -1 })
   })
 
+  it('appends fresh copies of a chain preset onto the existing stack and selects the last one', () => {
+    useProjectStore.getState().addEffect('exposure')
+    const chain = useProjectStore.getState().project!.effects
+    useProjectStore.getState().addEffectsFromChainPreset(chain)
+    const { project, selectedEffectId } = useProjectStore.getState()
+    expect(project?.effects).toHaveLength(2)
+    expect(project?.effects[1].type).toBe('exposure')
+    expect(project?.effects[1].id).not.toBe(project?.effects[0].id)
+    expect(selectedEffectId).toBe(project?.effects[1].id)
+  })
+
+  it('does nothing when applying an empty chain preset', () => {
+    useProjectStore.getState().addEffectsFromChainPreset([])
+    expect(useProjectStore.getState().project?.effects).toHaveLength(0)
+  })
+
   it('sets a mask on an effect', () => {
     useProjectStore.getState().addEffect('exposure')
     const id = useProjectStore.getState().project!.effects[0].id
