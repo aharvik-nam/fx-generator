@@ -25,6 +25,7 @@ import { colorQuantizeEffect } from './definitions/colorQuantize'
 import { kaleidoscopeEffect } from './definitions/kaleidoscope'
 import { kuwaharaEffect } from './definitions/kuwahara'
 import { blurSharpenEffect } from './definitions/blurSharpen'
+import { printSurfaceEffect } from './definitions/printSurface'
 
 const EFFECT_DEFINITIONS: EffectDefinition[] = [
   exposureEffect,
@@ -53,6 +54,7 @@ const EFFECT_DEFINITIONS: EffectDefinition[] = [
   kaleidoscopeEffect,
   kuwaharaEffect,
   blurSharpenEffect,
+  printSurfaceEffect,
 ]
 
 const registry = new Map(EFFECT_DEFINITIONS.map((definition) => [definition.id, definition]))

@@ -84,6 +84,11 @@ import {
   gaussianBlur,
   gaussianKernel1D,
 } from '../engine/effects/definitions/blurSharpen'
+import {
+  applyPrintSurface,
+  applyPrintToneCurve,
+  getSurfaceCharacter,
+} from '../engine/effects/definitions/printSurface'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyFn = (...args: any[]) => unknown
@@ -270,6 +275,21 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
     kind: 'pixel',
     mainFn: applyBlurSharpen,
     deps: [fn(clamp8), fn(gaussianKernel1D), fn(gaussianBlur)],
+  },
+  'print-surface': {
+    kind: 'pixel',
+    mainFn: applyPrintSurface,
+    deps: [
+      fn(clamp8),
+      fn(mulberry32),
+      ...LUMINANCE_GRID_DEPS,
+      fn(boxBlurField),
+      fn(generateWhiteNoiseField),
+      fn(srgbToLinear),
+      fn(linearToSrgb),
+      fn(getSurfaceCharacter),
+      fn(applyPrintToneCurve),
+    ],
   },
 }
 

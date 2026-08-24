@@ -36,6 +36,7 @@ describe('effect registry', () => {
       'kaleidoscope',
       'kuwahara',
       'blur-sharpen',
+      'print-surface',
     ])
   })
 
