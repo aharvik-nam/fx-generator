@@ -1,7 +1,7 @@
 import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { clamp01 } from '../canvas2d/colorMath'
 import { computeLuminanceGrid } from '../canvas2d/sobelGradient'
-import { mulberry32 } from '../../random/seededRandom'
+import { cellSeed, mulberry32 } from '../../random/seededRandom'
 import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export type StippleDot = { x: number; y: number; radius: number }
@@ -23,11 +23,17 @@ export function computeStippleDots(
   dotSize: number,
   seed: number,
 ): StippleDot[] {
-  const random = mulberry32(seed)
   const dots: StippleDot[] = []
 
-  for (let cellY = 0; cellY < height; cellY += cellSize) {
-    for (let cellX = 0; cellX < width; cellX += cellSize) {
+  // Each grid cell gets its own random() stream keyed by (row, col) — not one shared sequential
+  // stream for the whole grid — so a cell's accept/reject roll and jitter stay the same
+  // regardless of how many other cells the grid has at a given resolution (see cellSeed's doc
+  // comment).
+  let row = 0
+  for (let cellY = 0; cellY < height; cellY += cellSize, row++) {
+    let col = 0
+    for (let cellX = 0; cellX < width; cellX += cellSize, col++) {
+      const random = mulberry32(cellSeed(seed, row, col))
       const sampleX = Math.min(width - 1, Math.floor(cellX + cellSize / 2))
       const sampleY = Math.min(height - 1, Math.floor(cellY + cellSize / 2))
       const darkness = 1 - luminance[sampleY * width + sampleX] / 255

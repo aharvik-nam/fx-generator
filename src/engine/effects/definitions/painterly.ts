@@ -2,7 +2,7 @@ import type { EffectDefinition, EffectParams, EffectRenderer } from '@/types'
 import { averageColor, colorAt, rgbToHex } from '../canvas2d/colorMath'
 import { computeLuminanceGrid, sobelGradientAt } from '../canvas2d/sobelGradient'
 import { flowAngleAt } from '../canvas2d/flowField'
-import { mulberry32 } from '../../random/seededRandom'
+import { cellSeed, mulberry32 } from '../../random/seededRandom'
 import { resolutionScaleFactor } from '../canvas2d/resolutionScale'
 
 export type BrushStroke = { x: number; y: number; angle: number; length: number }
@@ -29,11 +29,16 @@ export function computeBrushStrokes(
   // Declared inline (not module-level) so a Recipe-exported, minified copy of this function
   // stays fully self-contained.
   const flatMagnitudeThreshold = 5
-  const random = mulberry32(seed)
   const strokes: BrushStroke[] = []
 
-  for (let gridY = spacing / 2; gridY < height; gridY += spacing) {
-    for (let gridX = spacing / 2; gridX < width; gridX += spacing) {
+  // Each grid cell gets its own random() stream keyed by (row, col) — not one shared sequential
+  // stream for the whole grid — so a cell's jitter stays the same regardless of how many other
+  // cells the grid has at a given resolution (see cellSeed's doc comment).
+  let row = 0
+  for (let gridY = spacing / 2; gridY < height; gridY += spacing, row++) {
+    let col = 0
+    for (let gridX = spacing / 2; gridX < width; gridX += spacing, col++) {
+      const random = mulberry32(cellSeed(seed, row, col))
       const jitterX = (random() - 0.5) * spacing * 0.6
       const jitterY = (random() - 0.5) * spacing * 0.6
       const x = Math.min(width - 1, Math.max(0, Math.round(gridX + jitterX)))

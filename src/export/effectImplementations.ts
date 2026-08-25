@@ -26,7 +26,7 @@ import {
 import { computeLuminanceGrid, sobelGradientAt } from '../engine/effects/canvas2d/sobelGradient'
 import { flowAngleAt } from '../engine/effects/canvas2d/flowField'
 import { resolutionScaleFactor } from '../engine/effects/canvas2d/resolutionScale'
-import { mulberry32 } from '../engine/random/seededRandom'
+import { cellSeed, mulberry32 } from '../engine/random/seededRandom'
 import { linearGradientValue, maskValueAt, radialGradientValue } from '../engine/mask/maskMath'
 
 import { applyExposure } from '../engine/effects/definitions/exposure'
@@ -204,6 +204,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
     deps: [
       fn(clamp01),
       fn(mulberry32),
+      fn(cellSeed),
       ...LUMINANCE_GRID_DEPS,
       ...RESOLUTION_SCALE_DEPS,
       fn(computeStippleDots),
@@ -221,6 +222,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
       ...SOBEL_DEPS,
       ...RESOLUTION_SCALE_DEPS,
       fn(mulberry32),
+      fn(cellSeed),
       fn(flowAngleAt),
       fn(computeBrushStrokes),
     ],
@@ -235,6 +237,7 @@ export const EFFECT_CODE_SPECS: Record<string, EffectCodeSpec> = {
       fn(averageColor),
       ...RESOLUTION_SCALE_DEPS,
       fn(mulberry32),
+      fn(cellSeed),
       fn(flowAngleAt),
       fn(computeFlowLines),
     ],
