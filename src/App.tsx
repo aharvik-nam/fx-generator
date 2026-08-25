@@ -1,5 +1,6 @@
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { TopBar } from '@/components/layout/TopBar'
+import { StatusBar } from '@/components/layout/StatusBar'
 import { EditorView } from '@/components/editor/EditorView'
 import { ShowcaseEditorView } from '@/components/showcase/ShowcaseEditorView'
 import { ShowcasePreviewView } from '@/components/showcase/ShowcasePreviewView'
@@ -23,6 +24,7 @@ function App() {
           {view === 'showcase-editor' && <ShowcaseEditorView />}
           {view === 'showcase-preview' && <ShowcasePreviewView />}
         </div>
+        <StatusBar />
       </div>
     </TooltipProvider>
   )

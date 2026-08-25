@@ -29,7 +29,7 @@ export function SliderParam({ label, value, min, max, step, onChange }: SliderPa
           max={max}
           step={step}
           aria-label={`${label} (nøyaktig verdi)`}
-          className="h-6 w-16 px-1.5 py-0 text-right text-xs"
+          className="h-6 w-16 px-1.5 py-0 text-right font-mono text-xs"
           onChange={(event) => {
             const parsed = Number(event.target.value)
             if (!Number.isNaN(parsed)) onChange(clamp(parsed, min, max), { commit: true })

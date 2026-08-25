@@ -59,9 +59,9 @@ export function EffectStackItem({ effect }: EffectStackItemProps) {
       }}
       style={style}
       className={cn(
-        'border-border bg-background rounded-md border',
+        'border-border bg-popover rounded-md border',
         isDragging && 'opacity-50',
-        selectedEffectId === effect.id && 'ring-ring ring-1',
+        selectedEffectId === effect.id && 'bg-accent ring-ring ring-1',
       )}
     >
       <div className="flex items-center gap-1 p-2">

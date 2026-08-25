@@ -13,6 +13,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getEffectDefinition, listEffectDefinitions } from '@/engine/effects/registry'
 import { EFFECT_CATEGORY_LABELS } from '@/engine/effects/categoryLabels'
+import { EFFECT_CATEGORY_COLORS } from '@/engine/effects/categoryColors'
 import { useProjectStore } from '@/state/projectStore'
 import { usePresetStore } from '@/state/presetStore'
 import { useChainPresetStore } from '@/state/chainPresetStore'
@@ -212,7 +213,16 @@ export function EffectLibrary() {
                           disabled={!hasProject}
                           onClick={() => addEffect(definition.id)}
                         >
-                          {definition.name}
+                          <span className="flex min-w-0 items-center gap-2">
+                            <span
+                              className="size-2 shrink-0 rounded-full"
+                              style={{
+                                backgroundColor: EFFECT_CATEGORY_COLORS[definition.category],
+                              }}
+                              aria-hidden="true"
+                            />
+                            <span className="truncate">{definition.name}</span>
+                          </span>
                           <Plus aria-hidden="true" />
                         </Button>
                       </TooltipTrigger>

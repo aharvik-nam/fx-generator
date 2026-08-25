@@ -23,7 +23,7 @@ export function NumberParam({ label, value, min, max, onChange }: NumberParamPro
         value={value}
         min={min}
         max={max}
-        className="h-7 w-20 text-right text-xs"
+        className="h-7 w-20 text-right font-mono text-xs"
         onChange={(event) => {
           const parsed = Number(event.target.value)
           if (!Number.isNaN(parsed)) onChange(parsed)

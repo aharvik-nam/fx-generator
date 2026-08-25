@@ -6,6 +6,7 @@ import { Slider } from '@/components/ui/slider'
 import { RenderPipeline } from '@/engine/pipeline/renderPipeline'
 import { renderToCanvas } from '@/engine/pipeline/renderToCanvas'
 import { formatMetadataExcerpt } from '@/showcase/formatMetadataExcerpt'
+import { useSplitDrag } from '@/hooks/useSplitDrag'
 import type { ImageProject, ShowcaseProject } from '@/types'
 
 type Orientation = 'vertical' | 'horizontal'
@@ -14,10 +15,6 @@ type BeforeAfterExplorerProps = {
   showcase: ShowcaseProject
   project: ImageProject
   sourceBitmap: ImageBitmap
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(max, Math.max(min, value))
 }
 
 function EmptyPane({ message }: { message: string }) {
@@ -40,10 +37,10 @@ export function BeforeAfterExplorer({ showcase, project, sourceBitmap }: BeforeA
   const beforePipelineRef = useRef(new RenderPipeline())
   const afterPipelineRef = useRef(new RenderPipeline())
   const containerRef = useRef<HTMLDivElement>(null)
-  const draggingRef = useRef(false)
 
   const [orientation, setOrientation] = useState<Orientation>('vertical')
-  const [position, setPosition] = useState(50)
+  const { position, setPosition, handlePointerDown, handlePointerMove, handlePointerUp } =
+    useSplitDrag(containerRef, orientation)
 
   useEffect(() => {
     if (!beforeCanvasRef.current || !beforeState) return
@@ -66,32 +63,6 @@ export function BeforeAfterExplorer({ showcase, project, sourceBitmap }: BeforeA
       'preview',
     )
   }, [sourceBitmap, afterState])
-
-  function updatePositionFromPoint(clientX: number, clientY: number) {
-    const rect = containerRef.current?.getBoundingClientRect()
-    if (!rect) return
-    const ratio =
-      orientation === 'vertical'
-        ? (clientX - rect.left) / rect.width
-        : (clientY - rect.top) / rect.height
-    setPosition(clamp(ratio * 100, 0, 100))
-  }
-
-  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
-    draggingRef.current = true
-    event.currentTarget.setPointerCapture(event.pointerId)
-    updatePositionFromPoint(event.clientX, event.clientY)
-  }
-
-  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
-    if (!draggingRef.current) return
-    updatePositionFromPoint(event.clientX, event.clientY)
-  }
-
-  function handlePointerUp(event: React.PointerEvent<HTMLDivElement>) {
-    draggingRef.current = false
-    event.currentTarget.releasePointerCapture(event.pointerId)
-  }
 
   if (
     showcase.states.length < 2 ||
@@ -163,10 +134,12 @@ export function BeforeAfterExplorer({ showcase, project, sourceBitmap }: BeforeA
           style={{ clipPath }}
         />
 
+        {/* Fixed light colors, not theme tokens: this overlay must stay visible against
+            arbitrary photo content underneath, regardless of the app's own (dark) theme. */}
         <div
           aria-hidden="true"
           className={cn(
-            'bg-background pointer-events-none absolute shadow-md',
+            'pointer-events-none absolute bg-white/90 shadow-md',
             orientation === 'vertical'
               ? 'top-0 bottom-0 -ml-px w-0.5'
               : 'right-0 left-0 -mt-px h-0.5',
@@ -177,7 +150,7 @@ export function BeforeAfterExplorer({ showcase, project, sourceBitmap }: BeforeA
         <div
           aria-hidden="true"
           className={cn(
-            'bg-background text-foreground pointer-events-none absolute flex size-9 items-center justify-center rounded-full shadow-md ring-2 ring-white',
+            'pointer-events-none absolute flex size-9 items-center justify-center rounded-full bg-white text-neutral-900 shadow-md',
             orientation === 'vertical'
               ? 'top-1/2 -translate-x-1/2 -translate-y-1/2'
               : 'left-1/2 -translate-x-1/2 -translate-y-1/2',

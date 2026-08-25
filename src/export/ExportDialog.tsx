@@ -105,7 +105,7 @@ export function ExportDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="default" size="sm">
           <Download aria-hidden="true" />
           Eksporter
         </Button>
@@ -144,7 +144,7 @@ export function ExportDialog() {
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center justify-between">
                 <Label>Kvalitet</Label>
-                <span className="text-muted-foreground text-xs tabular-nums">
+                <span className="text-muted-foreground font-mono text-xs tabular-nums">
                   {Math.round(exportSettings.quality * 100)}%
                 </span>
               </div>

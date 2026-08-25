@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useViewStore, type AppView } from '@/state/viewStore'
+import { ACTIVE_TAB_CLASSNAME } from './activeTabClassName'
 import { useProjectStore } from '@/state/projectStore'
 import { ExportDialog } from '@/export/ExportDialog'
 import { ProjectsDialog } from '@/components/project/ProjectsDialog'
@@ -34,7 +35,7 @@ export function TopBar() {
   }
 
   return (
-    <header className="border-border bg-background flex h-14 shrink-0 items-center gap-2 border-b pr-2 pl-4">
+    <header className="border-border bg-card flex h-14 shrink-0 items-center gap-2 border-b pr-2 pl-4">
       <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto py-2">
         <div className="flex shrink-0 items-center gap-2 font-semibold">
           <Sparkles className="text-primary size-5" aria-hidden="true" />
@@ -104,9 +105,15 @@ export function TopBar() {
 
       <Tabs value={view} onValueChange={(value) => setView(value as AppView)} className="shrink-0">
         <TabsList>
-          <TabsTrigger value="editor">Editor</TabsTrigger>
-          <TabsTrigger value="showcase-editor">Showcase</TabsTrigger>
-          <TabsTrigger value="showcase-preview">Forhåndsvis</TabsTrigger>
+          <TabsTrigger value="editor" className={ACTIVE_TAB_CLASSNAME}>
+            Editor
+          </TabsTrigger>
+          <TabsTrigger value="showcase-editor" className={ACTIVE_TAB_CLASSNAME}>
+            Showcase
+          </TabsTrigger>
+          <TabsTrigger value="showcase-preview" className={ACTIVE_TAB_CLASSNAME}>
+            Forhåndsvis
+          </TabsTrigger>
         </TabsList>
       </Tabs>
     </header>

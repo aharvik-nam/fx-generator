@@ -14,11 +14,19 @@ function formatCoordinate(value: number, positiveLabel: string, negativeLabel: s
   return `${Math.abs(value).toFixed(4)}° ${label}`
 }
 
-function MetadataRow({ label, value }: { label: string; value: string }) {
+function MetadataRow({
+  label,
+  value,
+  mono = false,
+}: {
+  label: string
+  value: string
+  mono?: boolean
+}) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-1 text-sm">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="truncate text-right font-medium">{value}</dd>
+      <dd className={`truncate text-right font-medium ${mono ? 'font-mono' : ''}`}>{value}</dd>
     </div>
   )
 }
@@ -37,8 +45,8 @@ export function MetadataPanel() {
   return (
     <div className="flex flex-col gap-4 p-3">
       {sensitiveFields.length > 0 && (
-        <div className="flex flex-col gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 p-2.5 text-xs">
-          <div className="flex items-center gap-1.5 font-medium text-amber-700 dark:text-amber-400">
+        <div className="border-warning-border bg-warning-background flex flex-col gap-1.5 rounded-md border p-2.5 text-xs">
+          <div className="text-warning flex items-center gap-1.5 font-medium">
             <AlertTriangle className="size-3.5" aria-hidden="true" />
             Sensitiv metadata funnet
           </div>
@@ -57,10 +65,11 @@ export function MetadataPanel() {
 
       <dl>
         <MetadataRow label="Filnavn" value={metadata.fileName} />
-        <MetadataRow label="Filstørrelse" value={formatFileSize(metadata.fileSize)} />
+        <MetadataRow label="Filstørrelse" value={formatFileSize(metadata.fileSize)} mono />
         <MetadataRow
           label="Dimensjoner"
           value={`${metadata.dimensions.width} × ${metadata.dimensions.height} px`}
+          mono
         />
         <MetadataRow label="Orientering" value={metadata.orientation} />
       </dl>
@@ -85,16 +94,16 @@ export function MetadataPanel() {
           <Separator />
           <dl>
             {metadata.exposure?.iso !== undefined && (
-              <MetadataRow label="ISO" value={String(metadata.exposure.iso)} />
+              <MetadataRow label="ISO" value={String(metadata.exposure.iso)} mono />
             )}
             {metadata.exposure?.fNumber !== undefined && (
-              <MetadataRow label="Blender" value={`f/${metadata.exposure.fNumber}`} />
+              <MetadataRow label="Blender" value={`f/${metadata.exposure.fNumber}`} mono />
             )}
             {metadata.exposure?.exposureTime && (
-              <MetadataRow label="Lukkertid" value={metadata.exposure.exposureTime} />
+              <MetadataRow label="Lukkertid" value={metadata.exposure.exposureTime} mono />
             )}
             {metadata.exposure?.focalLength !== undefined && (
-              <MetadataRow label="Brennvidde" value={`${metadata.exposure.focalLength} mm`} />
+              <MetadataRow label="Brennvidde" value={`${metadata.exposure.focalLength} mm`} mono />
             )}
           </dl>
         </>
@@ -117,7 +126,7 @@ export function MetadataPanel() {
           <Separator />
           <div className="flex items-center gap-1.5 text-sm">
             <MapPin className="text-muted-foreground size-3.5" aria-hidden="true" />
-            <span>
+            <span className="font-mono">
               {formatCoordinate(metadata.gps.latitude, 'N', 'S')},{' '}
               {formatCoordinate(metadata.gps.longitude, 'Ø', 'V')}
             </span>

@@ -1,5 +1,6 @@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ACTIVE_TAB_CLASSNAME } from './activeTabClassName'
 import { EffectStack } from '@/components/editor/EffectStack'
 import { MetadataPanel } from '@/components/metadata/MetadataPanel'
 import { RecipePanel } from '@/components/recipe/RecipePanel'
@@ -8,9 +9,15 @@ export function RightPanelContent() {
   return (
     <Tabs defaultValue="stack" className="flex min-h-0 flex-1 flex-col">
       <TabsList className="m-2">
-        <TabsTrigger value="stack">Effektstakk</TabsTrigger>
-        <TabsTrigger value="metadata">Metadata</TabsTrigger>
-        <TabsTrigger value="recipe">Recipe</TabsTrigger>
+        <TabsTrigger value="stack" className={ACTIVE_TAB_CLASSNAME}>
+          Effektstakk
+        </TabsTrigger>
+        <TabsTrigger value="metadata" className={ACTIVE_TAB_CLASSNAME}>
+          Metadata
+        </TabsTrigger>
+        <TabsTrigger value="recipe" className={ACTIVE_TAB_CLASSNAME}>
+          Recipe
+        </TabsTrigger>
       </TabsList>
       <ScrollArea className="min-w-0 flex-1">
         <TabsContent value="stack" className="mt-0 min-w-0">
@@ -31,7 +38,7 @@ export function RightPanel() {
   return (
     <aside
       aria-label="Effektstakk og egenskaper"
-      className="border-border bg-background hidden w-80 shrink-0 flex-col border-l lg:flex"
+      className="border-border bg-card hidden w-80 shrink-0 flex-col border-l lg:flex"
     >
       <RightPanelContent />
     </aside>

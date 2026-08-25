@@ -32,7 +32,7 @@ export function ShowcaseStateItem({ state, showcase }: ShowcaseStateItemProps) {
     <li
       ref={setNodeRef}
       style={style}
-      className={cn('border-border bg-background rounded-md border', isDragging && 'opacity-50')}
+      className={cn('border-border bg-popover rounded-md border', isDragging && 'opacity-50')}
     >
       <div className="flex items-center gap-2 p-2">
         <button

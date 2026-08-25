@@ -23,7 +23,7 @@ export function SeedControl({ effect }: { effect: EffectNode }) {
           id={id}
           type="number"
           value={effect.seed ?? 0}
-          className="h-7 w-24 text-right text-xs"
+          className="h-7 w-24 text-right font-mono text-xs"
           onChange={(event) => {
             const parsed = Number(event.target.value)
             if (!Number.isNaN(parsed)) setEffectSeed(effect.id, parsed)

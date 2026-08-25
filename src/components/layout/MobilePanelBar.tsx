@@ -11,7 +11,7 @@ import { RightPanelContent } from './RightPanel'
  */
 export function MobilePanelBar() {
   return (
-    <div className="border-border bg-background flex shrink-0 items-center gap-2 border-b p-2 lg:hidden">
+    <div className="border-border bg-card flex shrink-0 items-center gap-2 border-b p-2 lg:hidden">
       <Sheet>
         <SheetTrigger asChild>
           <Button type="button" variant="outline" size="sm">
